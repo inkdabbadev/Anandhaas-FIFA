@@ -1,26 +1,202 @@
 @import "tailwindcss";
 
+/* ─── Design Tokens — Anandhaas × FIFA World Cup 2026 ──────────────────────────
+   Three brand pillars, used with restraint:
+   · Anandhaas emerald  — heritage + the pitch
+   · Championship gold  — the precious accent
+   · FIFA cobalt blue   — the official tournament co-brand
+   The personality lives in the surfaces (aurora + watermark) and type,
+   not in loud fills.                                                          */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Ink — near-black with a teal-green warmth. Text + solid dark surfaces. */
+  --dark: #0b1f1a;
+  --dark-2: #13302a;   /* raised element on dark (pills, inputs) */
+  --dark-3: #204c40;   /* hairline on dark */
+  --on-dark-dim: #8fb6ad; /* low-emphasis text on dark/aurora */
+
+  /* Anandhaas emerald */
+  --brand-vivid: #16a34a;
+
+  /* FIFA cobalt blue */
+  --fifa: #2b5fd9;
+  --fifa-deep: #16235e;
+  --fifa-light: #7ea2f6;
+  --fifa-bg: #ecf1fe;
+  --fifa-border: #bccdf7;
+
+  /* Backgrounds — airy, warm-neutral */
+  --bg: #f3f6f2;
+  --card: #ffffff;
+
+  /* Action accent */
+  --gold: #93c5fd;
+  --gold-light: #dbeafe;
+  --gold-bg: #eff6ff;
+  --gold-border: #bfdbfe;
+
+  /* Text */
+  --mid: #44605a;
+  --muted: #76918a;
+
+  /* Hairlines */
+  --border: #e6ece7;
+  --border-2: #d6e0d9;
+
+  /* Status */
+  --green: #15803d;
+  --green-bg: #e8f5ec;
+  --green-border: #b7e0c4;
+  --red: #b42318;
+  --red-bg: #fdecea;
+
+  /* Elevation — soft, layered */
+  --shadow-sm: 0 1px 2px rgba(8, 26, 22, 0.04), 0 1px 3px rgba(8, 26, 22, 0.06);
+  --shadow-md: 0 2px 6px rgba(8, 26, 22, 0.05), 0 10px 26px rgba(8, 26, 22, 0.08);
+  --shadow-lg: 0 4px 10px rgba(8, 26, 22, 0.06), 0 20px 44px rgba(8, 26, 22, 0.14);
+  --shadow-gold: 0 8px 22px rgba(147, 197, 253, 0.28);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-dark: var(--dark);
+  --color-dark-2: var(--dark-2);
+  --color-dark-3: var(--dark-3);
+  --color-brand-vivid: var(--brand-vivid);
+  --color-fifa: var(--fifa);
+  --color-fifa-deep: var(--fifa-deep);
+  --color-fifa-light: var(--fifa-light);
+  --color-fifa-bg: var(--fifa-bg);
+  --color-fifa-border: var(--fifa-border);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-bg: var(--gold-bg);
+  --color-gold-border: var(--gold-border);
+  --color-mid: var(--mid);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-border-2: var(--border-2);
+  --color-green: var(--green);
+  --color-green-bg: var(--green-bg);
+  --color-green-border: var(--green-border);
+  --color-red: var(--red);
+  --color-red-bg: var(--red-bg);
+  --font-serif: var(--font-inter), system-ui, sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--dark);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.011em;
+}
+
+/* ─── Typography ──────────────────────────────────────────────────────────────
+   One family (Inter) site-wide. `.font-serif` is retained as the display helper
+   — same typeface, just tighter tracking for large headings. */
+.font-serif {
+  font-family: var(--font-serif);
+  letter-spacing: -0.028em;
+}
+h1, h2, h3 {
+  letter-spacing: -0.02em;
+}
+
+/* Tabular figures for stats, scores, balances — keeps numbers from jittering. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ─── Brand surface — "aurora on midnight" with a ghosted FIFA emblem ───────── */
+.bg-brand {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(125% 80% at 82% -15%, rgba(43, 95, 217, 0.55) 0%, rgba(43, 95, 217, 0) 56%),
+    radial-gradient(115% 78% at 4% 116%, rgba(22, 163, 74, 0.42) 0%, rgba(22, 163, 74, 0) 56%),
+    radial-gradient(90% 60% at 55% 125%, rgba(147, 197, 253, 0.14) 0%, transparent 60%),
+    linear-gradient(162deg, #0a1a32 0%, #07201a 100%);
+}
+.bg-brand::before {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  z-index: 0;
+  background: url("/FFF.png") no-repeat;
+  background-position: center center;
+  background-size: min(92vw, 430px) auto;
+  opacity: 0.13;
+  mix-blend-mode: luminosity;
+  -webkit-mask-image: radial-gradient(closest-side at 50% 50%, #000 0%, rgba(0, 0, 0, 0.62) 44%, transparent 76%);
+  mask-image: radial-gradient(closest-side at 50% 50%, #000 0%, rgba(0, 0, 0, 0.62) 44%, transparent 76%);
+  pointer-events: none;
+}
+.bg-brand > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Frosted, translucent bars. */
+.frost {
+  background: color-mix(in srgb, var(--card) 78%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.shadow-card { box-shadow: var(--shadow-sm); }
+.shadow-float { box-shadow: var(--shadow-md); }
+.shadow-pop { box-shadow: var(--shadow-lg); }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.thin-scrollbar::-webkit-scrollbar { width: 3px; }
+.thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.thin-scrollbar::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+
+/* ─── Animations ────────────────────────────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.8); }
+}
+.animate-pulse-dot { animation: pulse-dot 1.2s infinite; }
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--border) 25%, #eef2ec 50%, var(--border) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 10px;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { animation: fade-in-up 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

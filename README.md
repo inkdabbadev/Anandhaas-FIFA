@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Anandhaas Predict
 
-## Getting Started
+A production-grade, UI-first **Progressive Web App** for **Anandhaas Sweets & Snacks** — a
+seasonal customer-loyalty platform disguised as a football prediction game.
 
-First, run the development server:
+> This is **not** a football app, a betting app, or fantasy sports. It is a **loyalty engine**.
+> Football is the engagement mechanism; the goal is retention, repeat purchases and store visits.
+> The same engine runs IPL, Diwali, Pongal or any future campaign by changing **database
+> configuration only** — no code changes.
+
+Live target: **predict.anandhaassweets.com**
+
+---
+
+## Stack
+
+| Layer | Choice |
+| --- | --- |
+| Framework | Next.js 16 (App Router, Server Components, Turbopack) |
+| Language | TypeScript (strict) |
+| Styling | Tailwind CSS v4 |
+| State | Zustand |
+| Forms / validation | React Hook Form + Zod |
+| Database / Auth | Supabase (Postgres + Phone OTP) |
+| Icons | Lucide |
+| QR | qrcode.react |
+| PWA | Manifest + service worker + offline shell |
+| Deploy | Vercel |
+
+---
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local      # works as-is — runs in mock mode (Phase 1)
+npm run dev                     # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+No Supabase credentials are required to explore the full UI. The app detects the absence of
+config and serves **seeded mock data** with realistic loading, empty and error states.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Demo login | |
+| --- | --- |
+| Phone | any valid Indian mobile (e.g. `+91 98765 43210`) |
+| OTP | `123456` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Development phases
 
-To learn more about Next.js, take a look at the following resources:
+The app was built UI-first, in deliberate phases:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Phase 1 — Perfect UI on seeded data.** Every screen, animation, skeleton, empty/error state.
+   `NEXT_PUBLIC_USE_MOCK_DATA=true`. _(Current state.)_
+2. **Phase 2 — Connect Supabase.** Implement `src/repositories/*`; the `data-service` seam swaps
+   from mock to live with zero screen changes. Apply `supabase/migrations`.
+3. **Phase 3 — Admin dashboard** (already scaffolded under `/admin`).
+4. **Phase 4 — Notifications, QR redemption scanning, purchase integrations, analytics.**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+See [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/                  # routes (App Router)
+│   ├── (app)/            # authenticated mobile app group (Home, Leaderboard, Tokens, Tiers, Profile)
+│   ├── admin/            # desktop-first admin console
+│   ├── welcome/          # landing
+│   ├── login/            # phone OTP auth
+│   └── offline/          # PWA offline fallback
+├── components/           # shared UI (ui/, layout/, admin/)
+├── features/             # feature modules (home, matches, predictions, leaderboard, tokens, tiers, profile, auth)
+├── services/             # data-service seam + purchase & notification engines
+├── repositories/         # Supabase data access (Phase 2)
+├── store/                # Zustand store
+├── schemas/              # Zod schemas
+├── config/               # campaign engine + env
+├── constants/            # tiers, points, nav
+├── lib/                  # utils, supabase clients, mock data
+├── types/                # domain types
+└── providers/            # client providers
+supabase/
+├── migrations/           # 0001_init.sql, 0002_rls.sql
+└── seed.sql              # FIFA 2026 campaign seed
+docs/                     # database, API, components, deployment, roadmap
+```
+
+See [docs/](docs/) for full documentation:
+[Architecture](docs/ARCHITECTURE.md) ·
+[Database](docs/DATABASE.md) ·
+[API](docs/API.md) ·
+[Components](docs/COMPONENTS.md) ·
+[Deployment](docs/DEPLOYMENT.md) ·
+[Roadmap](docs/ROADMAP.md)
+
+---
+
+## The campaign engine
+
+Everything seasonal lives in a `campaigns` row (`config/campaign.ts` holds the Phase 1 default):
+branding, scoring rules, token rates, prediction windows. To launch a new campaign you insert a
+row and flip `is_active` — matches, rewards and the leaderboard all bind to it. The app never
+hardcodes "FIFA".
+
+---
+
+## Scripts
+
+```bash
+npm run dev      # dev server (Turbopack)
+npm run build    # production build
+npm run start    # serve production build
+npm run lint     # eslint
+```
+
+---
+
+## License
+
+Proprietary — © Anandhaas Sweets & Snacks.
