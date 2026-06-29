@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Anandhaas Predict">
+  <defs>
+    <linearGradient id="bg" x1="84" y1="36" x2="432" y2="476" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#102a4f"/>
+      <stop offset="0.55" stop-color="#0b2f27"/>
+      <stop offset="1" stop-color="#071712"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="144" y1="116" x2="364" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#93c5fd"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="158" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="24"/>
+  <path d="M151 311c42 52 96 78 162 78 28 0 53-5 75-15-32 45-78 70-132 70-77 0-143-54-160-128 16 1 35 0 55-5Z" fill="#16a34a" fill-opacity="0.9"/>
+  <path d="M258 76c-72 0-132 48-151 114 28-19 61-29 99-29 71 0 128 35 172 105 13 20 25 35 37 45 3-17 5-35 5-54 0-100-72-181-162-181Z" fill="url(#accent)"/>
+  <path d="M159 219c26-28 59-43 97-43 52 0 95 25 128 76 18 28 36 44 55 49-20 34-58 54-102 54-52 0-94-25-126-75-18-28-35-48-52-61Z" fill="#f8fafc" fill-opacity="0.95"/>
+  <circle cx="257" cy="263" r="60" fill="#0b1f1a"/>
+  <path d="M258 209 315 250 293 317h-70l-22-67 57-41Z" fill="#ffffff"/>
+  <path d="M258 230 290 253 278 291h-40l-12-38 32-23Z" fill="#2563eb"/>
+</svg>

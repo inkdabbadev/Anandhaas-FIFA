@@ -1,23 +1,66 @@
-import { getMatches } from '@/services/data-service'
-import { MatchCard } from './match-card'
-import { EmptyState } from '@/components/ui/empty-state'
+'use client'
 
-/** Async server component — streams the live + upcoming match feed. */
-export async function MatchList() {
-  const matches = await getMatches()
+import { useEffect, useState } from 'react'
+import { EmptyState } from '@/components/ui/empty-state'
+import { MatchCardSkeleton } from '@/components/ui/skeleton'
+import { useAppStore } from '@/store/app-store'
+import { CalendarDays } from 'lucide-react'
+import { MatchCard } from './match-card'
+import { loadMatchFeed } from './actions'
+
+export function MatchList() {
+  const matches = useAppStore((s) => s.matches)
+  const user = useAppStore((s) => (s.currentPhone ? s.users[s.currentPhone] : null))
+  const hydrateMatchFeed = useAppStore((s) => s.hydrateMatchFeed)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      setLoading(true)
+      const result = await loadMatchFeed(user?.id)
+      if (cancelled) return
+
+      if (!result.ok) {
+        setError(result.message)
+      } else {
+        setError('')
+      }
+      hydrateMatchFeed(result.matches, result.predictions)
+      setLoading(false)
+    }
+
+    load()
+
+    return () => {
+      cancelled = true
+    }
+  }, [hydrateMatchFeed, user?.id])
+
   const visible = matches.filter((m) => m.status === 'live' || m.status === 'upcoming')
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-3 px-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <MatchCardSkeleton key={i} />
+        ))}
+      </div>
+    )
+  }
 
   if (visible.length === 0) {
     return (
       <EmptyState
-        emoji="🗓️"
+        icon={CalendarDays}
         title="No matches yet"
-        description="New fixtures drop here as soon as they’re scheduled. Check back soon."
+        description={error || 'New fixtures drop here as soon as they are scheduled. Check back soon.'}
       />
     )
   }
 
-  // Live first, then by kickoff.
   const ordered = [...visible].sort((a, b) => {
     if (a.status === 'live' && b.status !== 'live') return -1
     if (b.status === 'live' && a.status !== 'live') return 1

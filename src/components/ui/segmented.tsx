@@ -22,7 +22,7 @@ export function Segmented<T extends string>({ value, onChange, options, classNam
             onClick={() => onChange(o.value)}
             className={cn(
               'flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-colors',
-              active ? 'bg-gold text-dark' : 'text-muted'
+              active ? 'bg-gold text-white' : 'text-muted'
             )}
           >
             {o.label}

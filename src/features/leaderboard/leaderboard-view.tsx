@@ -1,36 +1,76 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Segmented } from '@/components/ui/segmented'
 import { RowSkeleton } from '@/components/ui/skeleton'
 import { EmptyState, ErrorState } from '@/components/ui/empty-state'
 import { getLeaderboard } from '@/services/data-service'
+import { useAppStore } from '@/store/app-store'
 import { initials, cn } from '@/lib/utils'
-import { tierByKey } from '@/constants'
+import { tierForPoints } from '@/constants'
 import { Search } from 'lucide-react'
 import type { LeaderboardEntry } from '@/types'
 
 type Scope = 'weekly' | 'season'
-const TROPHIES = ['🥇', '🥈', '🥉']
 
 export function LeaderboardView() {
+  const me = useAppStore((s) => (s.currentPhone ? s.users[s.currentPhone] : null))
   const [scope, setScope] = useState<Scope>('weekly')
   const [query, setQuery] = useState('')
   const [entries, setEntries] = useState<LeaderboardEntry[] | null>(null)
   const [error, setError] = useState(false)
 
+  const shapeEntries = useCallback((data: LeaderboardEntry[], currentScope: Scope) => {
+    // Drop the seeded "me" placeholder and splice in the real signed-in user.
+    const others = data.filter((e) => !e.is_me)
+    const merged: LeaderboardEntry[] = me
+      ? [
+          ...others,
+          {
+            rank: 0,
+            user_id: me.phone,
+            name: me.name,
+            avatar_url: null,
+            tier: tierForPoints(me.points).key,
+            points: me.points,
+            correct_predictions: me.correctCount,
+            exact_scores: 0,
+            is_me: true,
+          },
+        ]
+      : others
+
+    const scaled =
+      currentScope === 'season'
+        ? merged.map((e) => (e.is_me ? e : { ...e, points: Math.round(e.points * 1.6) }))
+        : merged
+
+    return scaled
+      .sort((a, b) => b.points - a.points)
+      .map((e, i) => ({ ...e, rank: i + 1 }))
+  }, [me])
+
   function load() {
     setEntries(null)
     setError(false)
     getLeaderboard()
-      .then((data) =>
-        // season view shows slightly compressed spread (demo transform)
-        setEntries(scope === 'season' ? data.map((e) => ({ ...e, points: Math.round(e.points * 1.6) })) : data)
-      )
+      .then((data) => setEntries(shapeEntries(data, scope)))
       .catch(() => setError(true))
   }
 
-  useEffect(load, [scope])
+  useEffect(() => {
+    let active = true
+    getLeaderboard()
+      .then((data) => {
+        if (active) setEntries(shapeEntries(data, scope))
+      })
+      .catch(() => {
+        if (active) setError(true)
+      })
+    return () => {
+      active = false
+    }
+  }, [scope, shapeEntries])
 
   const filtered = entries?.filter((e) =>
     (e.name ?? '').toLowerCase().includes(query.trim().toLowerCase())
@@ -40,7 +80,11 @@ export function LeaderboardView() {
     <div className="px-4 pt-3">
       <Segmented
         value={scope}
-        onChange={setScope}
+        onChange={(next) => {
+          setEntries(null)
+          setError(false)
+          setScope(next)
+        }}
         options={[
           { value: 'weekly', label: 'This week' },
           { value: 'season', label: 'Full season' },
@@ -58,7 +102,7 @@ export function LeaderboardView() {
         />
       </div>
 
-      <p className="px-1 pb-1 pt-3 text-[10px] text-muted">
+      <p className="px-1 pb-1 pt-3 text-xs text-muted">
         {scope === 'weekly'
           ? 'Resets every Sunday · Top 3 win real rewards'
           : 'Season standings carry through 31 July 2026'}
@@ -70,7 +114,7 @@ export function LeaderboardView() {
         ) : !entries ? (
           Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)
         ) : filtered && filtered.length > 0 ? (
-          filtered.map((e, i) => <LeaderboardRow key={e.user_id} entry={e} index={entries.indexOf(e)} />)
+          filtered.map((e) => <LeaderboardRow key={e.user_id} entry={e} index={entries.indexOf(e)} />)
         ) : (
           <EmptyState emoji="🔍" title="No predictors found" description="Try a different name." />
         )}
@@ -80,7 +124,6 @@ export function LeaderboardView() {
 }
 
 function LeaderboardRow({ entry, index }: { entry: LeaderboardEntry; index: number }) {
-  const tier = tierByKey(entry.tier)
   const top3 = index < 3
   return (
     <div
@@ -92,12 +135,12 @@ function LeaderboardRow({ entry, index }: { entry: LeaderboardEntry; index: numb
       <span
         className={cn('min-w-6 text-center text-base font-bold', top3 ? 'text-gold' : 'text-muted')}
       >
-        {top3 ? TROPHIES[index] : index + 1}
+        {index + 1}
       </span>
       <span
         className={cn(
           'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold',
-          entry.is_me ? 'bg-gold text-dark' : 'bg-dark text-gold-light'
+          entry.is_me ? 'bg-gold text-white' : 'bg-dark text-gold-light'
         )}
       >
         {initials(entry.name)}

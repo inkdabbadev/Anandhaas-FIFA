@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-dvh justify-center bg-dark">
       <div className="relative flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg">
         <TopNav />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden pb-[76px] thin-scrollbar">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden pb-[calc(84px+env(safe-area-inset-bottom))] thin-scrollbar">
           {children}
         </main>
         <BottomNav />

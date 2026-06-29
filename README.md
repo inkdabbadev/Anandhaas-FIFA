@@ -21,7 +21,7 @@ Live target: **predict.anandhaassweets.com**
 | Styling | Tailwind CSS v4 |
 | State | Zustand |
 | Forms / validation | React Hook Form + Zod |
-| Database / Auth | Supabase (Postgres + Phone OTP) |
+| Database / Auth | Supabase (Postgres + phone/email OTP flow) |
 | Icons | Lucide |
 | QR | qrcode.react |
 | PWA | Manifest + service worker + offline shell |
@@ -43,6 +43,7 @@ config and serves **seeded mock data** with realistic loading, empty and error s
 | Demo login | |
 | --- | --- |
 | Phone | any valid Indian mobile (e.g. `+91 98765 43210`) |
+| Email | any valid email address |
 | OTP | `123456` |
 
 ---
@@ -55,7 +56,7 @@ The app was built UI-first, in deliberate phases:
    `NEXT_PUBLIC_USE_MOCK_DATA=true`. _(Current state.)_
 2. **Phase 2 — Connect Supabase.** Implement `src/repositories/*`; the `data-service` seam swaps
    from mock to live with zero screen changes. Apply `supabase/migrations`.
-3. **Phase 3 — Admin dashboard** (already scaffolded under `/admin`).
+3. **Phase 3 — Admin dashboard** (separate admin application).
 4. **Phase 4 — Notifications, QR redemption scanning, purchase integrations, analytics.**
 
 See [docs/ROADMAP.md](docs/ROADMAP.md).
@@ -67,13 +68,12 @@ See [docs/ROADMAP.md](docs/ROADMAP.md).
 ```
 src/
 ├── app/                  # routes (App Router)
-│   ├── (app)/            # authenticated mobile app group (Home, Leaderboard, Tokens, Tiers, Profile)
-│   ├── admin/            # desktop-first admin console
+│   ├── (app)/            # authenticated mobile app group (Home, Leaderboard, Rewards, Tiers, Profile)
 │   ├── welcome/          # landing
-│   ├── login/            # phone OTP auth
+│   ├── login/            # phone + email OTP auth
 │   └── offline/          # PWA offline fallback
-├── components/           # shared UI (ui/, layout/, admin/)
-├── features/             # feature modules (home, matches, predictions, leaderboard, tokens, tiers, profile, auth)
+├── components/           # shared UI (ui/, layout/)
+├── features/             # feature modules (home, matches, predictions, leaderboard, rewards, tiers, profile, auth)
 ├── services/             # data-service seam + purchase & notification engines
 ├── repositories/         # Supabase data access (Phase 2)
 ├── store/                # Zustand store
@@ -84,7 +84,7 @@ src/
 ├── types/                # domain types
 └── providers/            # client providers
 supabase/
-├── migrations/           # 0001_init.sql, 0002_rls.sql
+├── migrations/           # 0001_init.sql, 0002_functions.sql, 0003_rls.sql
 └── seed.sql              # FIFA 2026 campaign seed
 docs/                     # database, API, components, deployment, roadmap
 ```

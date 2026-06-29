@@ -13,7 +13,6 @@ export type NotificationEvent =
   | { type: 'match_starting_soon'; userId: string; matchLabel: string; minutes: number }
   | { type: 'prediction_won'; userId: string; points: number; matchLabel: string }
   | { type: 'reward_redeemed'; userId: string; rewardTitle: string; qrCode: string }
-  | { type: 'tokens_expiring'; userId: string; amount: number; inDays: number }
   | { type: 'streak_bonus'; userId: string; bonus: number }
   | { type: 'tier_up'; userId: string; tier: string }
 
@@ -28,7 +27,6 @@ const ROUTING: Record<NotificationEvent['type'], NotificationChannel[]> = {
   match_starting_soon: ['push', 'whatsapp'],
   prediction_won: ['push', 'in_app'],
   reward_redeemed: ['whatsapp', 'in_app'],
-  tokens_expiring: ['whatsapp', 'push'],
   streak_bonus: ['in_app', 'push'],
   tier_up: ['in_app', 'push', 'whatsapp'],
 }

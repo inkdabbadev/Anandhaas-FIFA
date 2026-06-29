@@ -6,11 +6,12 @@ Target: **Vercel** + **Supabase**, domain `predict.anandhaassweets.com`.
 
 1. Create a project at supabase.com.
 2. **SQL editor** → run in order: `supabase/migrations/0001_init.sql`,
-   `supabase/migrations/0002_rls.sql`, `supabase/seed.sql`.
+   `supabase/migrations/0002_functions.sql`, `supabase/migrations/0003_rls.sql`,
+   `supabase/seed.sql`.
    (Or, with the CLI linked: `supabase db push` then run the seed.)
-3. **Authentication → Providers → Phone**: enable, and connect an SMS provider (Twilio /
-   MessageBird) with your credentials.
-4. Promote yourself to admin:
+3. **Authentication → Providers**: enable phone and email OTP delivery. Connect an SMS provider
+   (Twilio / MessageBird) and configure email delivery with your production sender.
+4. Promote yourself in the separate admin application database flow:
    ```sql
    insert into admins (user_id) values ('<your-auth-user-uuid>');
    ```
@@ -45,10 +46,10 @@ In **Authentication → URL Configuration** add:
 
 ## 5. Post-deploy checks
 
-- [ ] Phone OTP sends and verifies on a real device.
+- [ ] Phone and email OTP delivery verifies on real devices/accounts.
 - [ ] PWA installs (manifest + service worker served; "Add to Home Screen" works).
 - [ ] RLS: a normal user cannot read another user's ledger (test with two accounts).
-- [ ] `/admin` is blocked for non-admins and reachable for admins.
+- [ ] Separate admin application is deployed and protected for admin users only.
 - [ ] Lighthouse ≥ 95 (mobile) for Performance / Best Practices / SEO / PWA.
 
 ## Notes
@@ -56,5 +57,4 @@ In **Authentication → URL Configuration** add:
 - The `middleware.ts` convention shows a Next 16 deprecation notice in favour of `proxy.ts`; it
   still functions. Rename when you adopt the new convention.
 - Replace `public/icon-192.png` / `icon-512.png` with real raster icons (an SVG fallback ships).
-- Token expiry and weekly leaderboard reset run as scheduled jobs (Supabase cron / Vercel Cron) —
-  see [ROADMAP.md](ROADMAP.md).
+- Weekly leaderboard/reset jobs can run through Supabase cron or Vercel Cron when enabled.

@@ -10,7 +10,7 @@ export default function NotFound() {
       </p>
       <Link
         href="/home"
-        className="mt-6 flex h-12 items-center justify-center rounded-xl bg-gold px-6 font-bold text-dark"
+        className="mt-6 flex h-12 items-center justify-center rounded-xl bg-gold px-6 font-bold text-white"
       >
         Back to home
       </Link>

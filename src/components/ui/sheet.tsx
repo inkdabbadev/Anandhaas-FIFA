@@ -36,7 +36,7 @@ export function Sheet({ open, onClose, children, labelledBy }: SheetProps) {
         aria-modal="true"
         aria-labelledby={labelledBy}
         className={cn(
-          'max-h-[92vh] w-full max-w-[430px] overflow-y-auto rounded-t-[28px] bg-bg px-5 pb-8 shadow-pop thin-scrollbar transition-transform duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]',
+          'max-h-[92vh] w-full max-w-[430px] overflow-y-auto rounded-t-[28px] bg-bg px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] shadow-pop thin-scrollbar transition-transform duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]',
           open ? 'translate-y-0' : 'translate-y-full'
         )}
       >

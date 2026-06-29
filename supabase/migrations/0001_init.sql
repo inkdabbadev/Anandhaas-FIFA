@@ -1,282 +1,237 @@
 -- ════════════════════════════════════════════════════════════════════════════
---  Anandhaas Predict — Initial Schema
---  Campaign-driven loyalty + prediction platform.
---  Run in Supabase SQL editor or via `supabase db push`.
+--  Anandhaas × FIFA Predict — Core schema (open campaign, points model)
+--  0001_init.sql — extensions, enums, tables, indexes, triggers
+--
+--  Model: open campaign (no tokens). Customers register with phone + email + name + age,
+--  make one free 1X2 prediction per match. A correct prediction earns points
+--  (campaigns.points_correct, default 2) at settlement; wrong earns 0. Points are
+--  spent on offers, deducted only when an admin redeems the claim in store.
+--  The point_ledger is the append-only source of truth; profiles.points is a
+--  trigger-maintained cache.
 -- ════════════════════════════════════════════════════════════════════════════
 
-create extension if not exists "pgcrypto";
+create extension if not exists pgcrypto;   -- gen_random_uuid()
+create extension if not exists citext;     -- case-insensitive text
 
--- ─── ENUMS ──────────────────────────────────────────────────────────────────
-create type user_tier        as enum ('mithai_fan', 'sweet_striker', 'golden_boot', 'fifa_legend');
-create type match_status      as enum ('upcoming', 'live', 'finished', 'cancelled');
-create type prediction_status as enum ('pending', 'won', 'lost', 'refunded');
-create type reward_status     as enum ('active', 'redeemed', 'expired', 'cancelled');
-create type token_tx_type     as enum ('purchase', 'prediction_spend', 'prediction_refund', 'redemption', 'bonus', 'referral', 'manual_grant', 'expiry');
-create type point_tx_type     as enum ('purchase', 'prediction_win', 'exact_score', 'first_scorer', 'perfect_match', 'streak_bonus', 'referral', 'manual_grant');
-create type purchase_source   as enum ('pos', 'shopify', 'manual', 'csv', 'webhook');
-create type notif_channel      as enum ('whatsapp', 'push', 'sms', 'email', 'in_app');
+-- ─── Enums ──────────────────────────────────────────────────────────────────
+create type admin_role        as enum ('owner', 'manager', 'counter_staff', 'analyst');
+create type user_tier         as enum ('mithai_fan', 'sweet_striker', 'golden_boot', 'fifa_legend');
+create type match_status      as enum ('scheduled', 'open', 'locked', 'live', 'finished', 'cancelled');
+create type prediction_pick   as enum ('home', 'draw', 'away');
+create type prediction_status as enum ('pending', 'won', 'lost', 'void');
+create type claim_status      as enum ('pending', 'redeemed', 'cancelled', 'expired');
+create type ledger_reason     as enum ('prediction_win', 'redemption', 'redemption_reversal', 'manual_adjustment');
 
--- ─── CAMPAIGNS ──────────────────────────────────────────────────────────────
--- The reusable "engine". A campaign bundles branding, scoring rules, matches,
--- rewards and leaderboard. Swap the active row to run IPL / Diwali / Pongal etc.
+-- ─── updated_at helper ──────────────────────────────────────────────────────
+create or replace function set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+-- ─── Campaigns (reusable campaign engine) ───────────────────────────────────
 create table campaigns (
-  id          uuid primary key default gen_random_uuid(),
-  slug        text unique not null,
-  name        text not null,
-  tagline     text,
-  sport       text not null default 'football',
-  season      text not null,
-  starts_at   timestamptz not null,
-  ends_at     timestamptz not null,
-  is_active   boolean not null default false,
-  branding    jsonb not null default '{}',
-  rules       jsonb not null default '{}',
-  created_at  timestamptz not null default now()
+  id             uuid primary key default gen_random_uuid(),
+  slug           text not null unique check (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'),
+  name           text not null,
+  tagline        text,
+  sport          text not null default 'football',
+  season         text not null,
+  starts_at      timestamptz not null,
+  ends_at        timestamptz not null,
+  is_active      boolean not null default false,
+  branding       jsonb not null default '{}'::jsonb,    -- colors, emoji, logo
+  points_correct int  not null default 2 check (points_correct >= 0),
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  constraint campaign_dates check (starts_at < ends_at)
 );
--- Only one active campaign at a time.
-create unique index one_active_campaign on campaigns (is_active) where is_active;
+-- At most one active campaign at a time.
+create unique index uq_campaigns_one_active on campaigns (is_active) where is_active;
+create trigger trg_campaigns_updated before update on campaigns
+  for each row execute function set_updated_at();
 
--- ─── USERS ──────────────────────────────────────────────────────────────────
--- Mirrors auth.users (1:1). `token_balance` & `season_points` are denormalised
--- caches kept in sync by ledger triggers; ledgers remain the source of truth.
-create table users (
-  id              uuid primary key references auth.users(id) on delete cascade,
-  phone           text unique not null,
-  name            text,
-  avatar_url      text,
-  tier            user_tier not null default 'mithai_fan',
-  season_points   integer not null default 0,
-  token_balance   integer not null default 0,
-  referral_code   text unique not null default upper(substr(md5(random()::text), 1, 8)),
-  referred_by     uuid references users(id),
-  streak_count    integer not null default 0,
-  streak_last_date date,
-  created_at      timestamptz not null default now(),
-  updated_at      timestamptz not null default now()
+-- ─── Profiles (customers) ───────────────────────────────────────────────────
+-- 1:1 with auth.users. Phone and email are unique account identifiers; `points` is a maintained cache
+-- of point_ledger; never written directly by clients (see ledger trigger below).
+create table profiles (
+  id         uuid primary key references auth.users(id) on delete cascade,
+  phone      text not null unique check (phone ~ '^[6-9][0-9]{9}$'),
+  email      citext not null unique check (email ~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$'),
+  name       text not null check (length(btrim(name)) between 1 and 80),
+  age        int  not null check (age between 12 and 120),
+  points     int  not null default 0 check (points >= 0),
+  tier       user_tier not null default 'mithai_fan',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
+create index idx_profiles_points on profiles (points desc);
+create trigger trg_profiles_updated before update on profiles
+  for each row execute function set_updated_at();
 
+-- ─── Admins ─────────────────────────────────────────────────────────────────
 create table admins (
-  user_id    uuid primary key references users(id) on delete cascade,
-  role       text not null default 'admin',
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  role       admin_role not null default 'counter_staff',
   created_at timestamptz not null default now()
 );
 
--- ─── MATCHES ────────────────────────────────────────────────────────────────
+create or replace function is_admin(uid uuid default auth.uid())
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from admins a where a.user_id = uid);
+$$;
+
+create or replace function is_admin_role(roles admin_role[], uid uuid default auth.uid())
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from admins a where a.user_id = uid and a.role = any(roles));
+$$;
+
+-- ─── Matches (admin-authored) ───────────────────────────────────────────────
 create table matches (
   id                   uuid primary key default gen_random_uuid(),
   campaign_id          uuid not null references campaigns(id) on delete cascade,
-  home_team            jsonb not null,   -- { name, flag, ranking }
-  away_team            jsonb not null,
-  competition          text not null,
+  competition          text not null default 'FIFA WC 2026',
   group_name           text,
+  home_name            text not null,
+  home_flag            text not null,
+  home_ranking         text,
+  away_name            text not null,
+  away_flag            text not null,
+  away_ranking         text,
+  venue                text,
   kickoff_at           timestamptz not null,
   prediction_closes_at timestamptz not null,
-  token_cost           integer not null default 1 check (token_cost >= 0),
-  status               match_status not null default 'upcoming',
-  home_score           integer check (home_score >= 0),
-  away_score           integer check (away_score >= 0),
-  first_scorer_team    text,
-  venue                text,
-  created_at           timestamptz not null default now()
+  status               match_status not null default 'scheduled',
+  home_score           int check (home_score is null or home_score between 0 and 99),
+  away_score           int check (away_score is null or away_score between 0 and 99),
+  -- Final outcome, generated from the score once entered.
+  result               prediction_pick generated always as (
+    case
+      when home_score is null or away_score is null then null
+      when home_score > away_score then 'home'::prediction_pick
+      when away_score > home_score then 'away'::prediction_pick
+      else 'draw'::prediction_pick
+    end
+  ) stored,
+  settled_at           timestamptz,
+  created_by           uuid references admins(user_id),
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now(),
+  constraint match_close_before_kickoff check (prediction_closes_at <= kickoff_at),
+  constraint match_score_pair check ((home_score is null) = (away_score is null))
 );
-create index matches_campaign_idx on matches (campaign_id, kickoff_at);
-create index matches_status_idx   on matches (status);
+create index idx_matches_campaign on matches (campaign_id);
+create index idx_matches_kickoff  on matches (kickoff_at);
+create index idx_matches_status   on matches (status);
+create trigger trg_matches_updated before update on matches
+  for each row execute function set_updated_at();
 
--- ─── PREDICTIONS ────────────────────────────────────────────────────────────
+-- ─── Predictions (one per user per match) ───────────────────────────────────
 create table predictions (
-  id                uuid primary key default gen_random_uuid(),
-  user_id           uuid not null references users(id) on delete cascade,
-  match_id          uuid not null references matches(id) on delete cascade,
-  campaign_id       uuid not null references campaigns(id) on delete cascade,
-  winner            text not null,
-  home_goals        integer not null check (home_goals between 0 and 30),
-  away_goals        integer not null check (away_goals between 0 and 30),
-  first_scorer_team text,
-  tokens_spent      integer not null default 0,
-  status            prediction_status not null default 'pending',
-  points_earned     integer not null default 0,
-  created_at        timestamptz not null default now(),
-  updated_at        timestamptz not null default now(),
-  unique (user_id, match_id)            -- one prediction per user per match
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid not null references profiles(id) on delete cascade,
+  match_id       uuid not null references matches(id) on delete cascade,
+  pick           prediction_pick not null,
+  status         prediction_status not null default 'pending',
+  points_awarded int not null default 0 check (points_awarded >= 0),
+  created_at     timestamptz not null default now(),
+  settled_at     timestamptz,
+  unique (user_id, match_id)                        -- ← one locked pick per match
 );
-create index predictions_user_idx  on predictions (user_id);
-create index predictions_match_idx  on predictions (match_id);
+create index idx_predictions_match on predictions (match_id);
+create index idx_predictions_user  on predictions (user_id);
 
--- ─── REWARDS & REDEMPTIONS ──────────────────────────────────────────────────
-create table rewards (
+-- Reject predictions once the window has closed / match is no longer open.
+create or replace function enforce_prediction_window()
+returns trigger language plpgsql as $$
+declare m matches;
+begin
+  select * into m from matches where id = new.match_id;
+  if m.id is null then
+    raise exception 'Match % not found', new.match_id;
+  end if;
+  if m.status <> 'open' or now() >= m.prediction_closes_at then
+    raise exception 'Predictions are closed for this match';
+  end if;
+  return new;
+end;
+$$;
+create trigger trg_predictions_window before insert on predictions
+  for each row execute function enforce_prediction_window();
+
+-- Predictions are immutable to clients once made; settlement sets app.settling='on'.
+create or replace function block_prediction_mutation()
+returns trigger language plpgsql as $$
+begin
+  raise exception 'Predictions cannot be changed once locked';
+end;
+$$;
+create trigger trg_predictions_no_update before update on predictions
+  for each row when (current_setting('app.settling', true) is distinct from 'on')
+  execute function block_prediction_mutation();
+
+-- ─── Offers (admin-authored rewards) ────────────────────────────────────────
+create table offers (
   id          uuid primary key default gen_random_uuid(),
   campaign_id uuid references campaigns(id) on delete cascade,
   title       text not null,
-  description text not null,
+  description text not null default '',
   icon        text not null default '🎁',
-  points_cost integer not null check (points_cost >= 0),
-  inventory   integer check (inventory >= 0),     -- null = unlimited
+  points_cost int  not null check (points_cost >= 0),
+  inventory   int  check (inventory is null or inventory >= 0),   -- null = unlimited
   is_active   boolean not null default true,
-  expires_at  timestamptz,
-  created_at  timestamptz not null default now()
+  valid_until timestamptz,
+  created_by  uuid references admins(user_id),
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
 );
+create index idx_offers_active on offers (is_active, points_cost);
+create trigger trg_offers_updated before update on offers
+  for each row execute function set_updated_at();
 
-create table redemptions (
-  id            uuid primary key default gen_random_uuid(),
-  user_id       uuid not null references users(id) on delete cascade,
-  reward_id     uuid not null references rewards(id),
-  points_spent  integer not null,
-  status        reward_status not null default 'active',
-  qr_code       text unique not null,
-  qr_expires_at timestamptz not null,
-  redeemed_at   timestamptz,
-  created_at    timestamptz not null default now()
+-- ─── Claims (reward redemptions) ────────────────────────────────────────────
+-- A claim reserves an offer. Points are deducted only at in-store redemption.
+create table claims (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references profiles(id) on delete cascade,
+  offer_id    uuid not null references offers(id) on delete restrict,
+  points_cost int  not null check (points_cost >= 0),    -- snapshot at claim time
+  status      claim_status not null default 'pending',
+  code        text not null unique default upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8)),
+  created_at  timestamptz not null default now(),
+  redeemed_at timestamptz,
+  redeemed_by uuid references admins(user_id)
 );
-create index redemptions_user_idx on redemptions (user_id);
+create index idx_claims_user   on claims (user_id);
+create index idx_claims_status on claims (status);
+-- Only one open (pending) claim per user per offer.
+create unique index uq_claims_open on claims (user_id, offer_id) where status = 'pending';
 
--- ─── LEDGERS (source of truth for balances) ─────────────────────────────────
-create table token_ledger (
-  id            uuid primary key default gen_random_uuid(),
-  user_id       uuid not null references users(id) on delete cascade,
-  type          token_tx_type not null,
-  amount        integer not null,         -- signed
-  balance_after integer not null,
-  ref_id        uuid,
-  note          text,
-  expires_at    timestamptz,              -- for expiry sweeps
-  created_at    timestamptz not null default now()
-);
-create index token_ledger_user_idx    on token_ledger (user_id, created_at desc);
-create index token_ledger_expiry_idx  on token_ledger (expires_at) where expires_at is not null;
-
+-- ─── Point ledger (append-only source of truth) ─────────────────────────────
 create table point_ledger (
-  id            uuid primary key default gen_random_uuid(),
-  user_id       uuid not null references users(id) on delete cascade,
-  campaign_id   uuid not null references campaigns(id) on delete cascade,
-  type          point_tx_type not null,
-  amount        integer not null,
-  balance_after integer not null,
-  ref_id        uuid,
-  note          text,
-  created_at    timestamptz not null default now()
-);
-create index point_ledger_user_idx on point_ledger (user_id, created_at desc);
-
--- ─── PURCHASES ──────────────────────────────────────────────────────────────
-create table purchases (
-  id             uuid primary key default gen_random_uuid(),
-  user_id        uuid not null references users(id) on delete cascade,
-  source         purchase_source not null default 'pos',
-  amount_inr     numeric(10,2) not null check (amount_inr >= 0),
-  tokens_granted integer not null default 0,
-  points_granted integer not null default 0,
-  ref_id         text,
-  purchased_at   timestamptz not null default now(),
-  created_at     timestamptz not null default now()
-);
-create index purchases_user_idx on purchases (user_id, purchased_at desc);
-
--- ─── NOTIFICATIONS & REFERRALS ──────────────────────────────────────────────
-create table notifications (
   id         uuid primary key default gen_random_uuid(),
-  user_id    uuid references users(id) on delete cascade,
-  channel    notif_channel not null default 'in_app',
-  event      text not null,
-  payload    jsonb not null default '{}',
-  sent_at    timestamptz,
-  read_at    timestamptz,
+  user_id    uuid not null references profiles(id) on delete cascade,
+  delta      int  not null,                        -- + earned, − spent
+  reason     ledger_reason not null,
+  ref_type   text,                                 -- 'prediction' | 'claim'
+  ref_id     uuid,
+  note       text,
   created_at timestamptz not null default now()
 );
-create index notifications_user_idx on notifications (user_id, created_at desc);
+create index idx_ledger_user on point_ledger (user_id, created_at desc);
 
-create table referrals (
-  id          uuid primary key default gen_random_uuid(),
-  referrer_id uuid not null references users(id) on delete cascade,
-  referee_id  uuid references users(id),
-  code        text not null,
-  rewarded    boolean not null default false,
-  created_at  timestamptz not null default now()
-);
-
-create table settings (
-  key        text primary key,
-  value      jsonb not null,
-  updated_at timestamptz not null default now()
-);
-
--- ════════════════════════════════════════════════════════════════════════════
---  TRIGGERS
--- ════════════════════════════════════════════════════════════════════════════
-
--- Keep users.updated_at fresh.
-create or replace function touch_updated_at() returns trigger as $$
+-- Maintain profiles.points cache from the ledger.
+create or replace function apply_ledger_to_balance()
+returns trigger language plpgsql as $$
 begin
-  new.updated_at = now();
+  update profiles set points = points + new.delta where id = new.user_id;
+  if (select points from profiles where id = new.user_id) < 0 then
+    raise exception 'Insufficient points';
+  end if;
   return new;
-end; $$ language plpgsql;
-
-create trigger users_touch before update on users
-  for each row execute function touch_updated_at();
-
--- Maintain token_balance cache from the ledger.
-create or replace function apply_token_ledger() returns trigger as $$
-begin
-  update users set token_balance = new.balance_after where id = new.user_id;
-  return new;
-end; $$ language plpgsql;
-
-create trigger token_ledger_apply after insert on token_ledger
-  for each row execute function apply_token_ledger();
-
--- Maintain season_points cache + recompute tier from the point ledger.
-create or replace function apply_point_ledger() returns trigger as $$
-declare new_tier user_tier;
-begin
-  select case
-    when new.balance_after >= 3000 then 'fifa_legend'
-    when new.balance_after >= 1500 then 'golden_boot'
-    when new.balance_after >= 500  then 'sweet_striker'
-    else 'mithai_fan'
-  end into new_tier;
-  update users set season_points = new.balance_after, tier = new_tier where id = new.user_id;
-  return new;
-end; $$ language plpgsql;
-
-create trigger point_ledger_apply after insert on point_ledger
-  for each row execute function apply_point_ledger();
-
--- Auto-create a public.users row when an auth user signs up.
-create or replace function handle_new_auth_user() returns trigger as $$
-begin
-  insert into public.users (id, phone)
-  values (new.id, coalesce(new.phone, new.email, new.id::text))
-  on conflict (id) do nothing;
-  return new;
-end; $$ language plpgsql security definer;
-
-create trigger on_auth_user_created after insert on auth.users
-  for each row execute function handle_new_auth_user();
-
--- ════════════════════════════════════════════════════════════════════════════
---  VIEWS
--- ════════════════════════════════════════════════════════════════════════════
-
--- Season leaderboard.
-create or replace view leaderboard_season as
-select
-  row_number() over (order by u.season_points desc) as rank,
-  u.id as user_id, u.name, u.avatar_url, u.tier, u.season_points as points,
-  count(p.id) filter (where p.status = 'won')                                   as correct_predictions,
-  count(p.id) filter (where p.home_goals = m.home_score
-                        and p.away_goals = m.away_score
-                        and m.status = 'finished')                              as exact_scores
-from users u
-left join predictions p on p.user_id = u.id
-left join matches m on m.id = p.match_id
-group by u.id;
-
--- Weekly leaderboard (current ISO week, from point_ledger).
-create or replace view leaderboard_weekly as
-select
-  row_number() over (order by sum(pl.amount) desc) as rank,
-  u.id as user_id, u.name, u.avatar_url, u.tier,
-  coalesce(sum(pl.amount), 0)::int as points
-from users u
-left join point_ledger pl
-  on pl.user_id = u.id and pl.created_at >= date_trunc('week', now())
-group by u.id;
+end;
+$$;
+create trigger trg_ledger_balance after insert on point_ledger
+  for each row execute function apply_ledger_to_balance();

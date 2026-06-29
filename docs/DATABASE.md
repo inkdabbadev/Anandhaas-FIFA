@@ -1,75 +1,51 @@
 # Database
 
-Postgres on Supabase. Schema lives in `supabase/migrations/` and seed in `supabase/seed.sql`.
+Postgres on Supabase. Schema lives in `supabase/migrations/` and seed data lives in `supabase/seed.sql`.
 
 ## Apply
 
 ```bash
-# with the Supabase CLI
-supabase db reset           # applies migrations + seed locally
-supabase db push            # push migrations to a linked project
-
-# or paste 0001_init.sql, 0002_rls.sql, seed.sql into the SQL editor in order
+supabase db reset
+supabase db push
 ```
 
-## Tables
+SQL editor order:
+
+1. `supabase/migrations/0001_init.sql`
+2. `supabase/migrations/0002_functions.sql`
+3. `supabase/migrations/0003_rls.sql`
+4. `supabase/seed.sql`
+
+## Current Model
 
 | Table | Purpose |
 | --- | --- |
-| `campaigns` | The reusable engine: branding, rules, season window. One active at a time. |
-| `users` | 1:1 with `auth.users`. Caches `token_balance`, `season_points`, `tier`, `streak`. |
-| `admins` | Grants admin console access (checked by `is_admin()` + middleware). |
-| `matches` | Fixtures bound to a campaign. Teams stored as JSONB `{name,flag,ranking}`. |
-| `predictions` | One per `(user, match)`. Winner + score + first scorer. |
-| `rewards` | Redeemable catalogue with points cost, inventory, expiry. |
-| `redemptions` | Issued reward instances with a unique one-time `qr_code`. |
-| `token_ledger` | Append-only signed token transactions. Source of truth for balance. |
-| `point_ledger` | Append-only signed point transactions. Drives season points + tier. |
-| `purchases` | Unified purchase records across all sources. |
-| `notifications` | Event log per channel. |
-| `referrals` | Referral codes and reward state. |
-| `settings` | Key/value app config (active campaign, maintenance flag). |
+| `campaigns` | Active seasonal campaign, branding, and scoring value. |
+| `profiles` | Customer profile linked 1:1 to `auth.users`; stores unique phone, unique email, name, age, points, tier. |
+| `admins` | Role table for the separate admin application and privileged RPC checks. |
+| `matches` | Admin-authored fixtures with teams, kickoff, prediction close time, score, result. |
+| `predictions` | One locked 1X2 pick per user per match. |
+| `offers` | Customer rewards catalogue with cost, inventory, active flag, expiry. |
+| `claims` | Customer reward claims; points are deducted only when redeemed by admin. |
+| `point_ledger` | Append-only point transactions; trigger maintains `profiles.points`. |
 
-## Enums
+## Business Rules
 
-`user_tier`, `match_status`, `prediction_status`, `reward_status`, `token_tx_type`,
-`point_tx_type`, `purchase_source`, `notif_channel`.
+- Predictions are free in the open campaign model.
+- A user can make only one prediction per match.
+- Predictions are accepted only when the match status is `open` and before `prediction_closes_at`.
+- Settlement is done through `fn_settle_match`, which scores all pending predictions and writes point credits.
+- Offers are claimed through `fn_claim_offer`; claiming reserves intent but does not deduct points.
+- Store redemption is done through `fn_redeem_claim`, which checks inventory and balance, writes the ledger debit, then marks the claim redeemed.
+- Customers can cancel only their own pending claims through `fn_cancel_claim`.
 
-## Triggers
+## Security
 
-| Trigger | Effect |
-| --- | --- |
-| `users_touch` | Maintains `users.updated_at`. |
-| `token_ledger_apply` | After insert → updates `users.token_balance = balance_after`. |
-| `point_ledger_apply` | After insert → updates `season_points` **and recomputes `tier`**. |
-| `on_auth_user_created` | Auto-creates a `public.users` row on signup. |
+RLS is enabled on all app tables. Customer writes are narrow:
 
-## Views
+- `profiles`: users can insert their own phone/email profile and update only `name` and `age`.
+- `predictions`: users can insert their own prediction only.
+- `claims` and `point_ledger`: users can read their own rows only.
+- Admin writes are checked through `admins` and the `is_admin_role` helper.
 
-- `leaderboard_season` — ranked by `season_points`, with correct/exact counts.
-- `leaderboard_weekly` — ranked by points earned since `date_trunc('week', now())`.
-
-## Balance integrity
-
-Never trust the client. Predictions debit tokens and settlement credits points **server-side**
-(service-role) by inserting ledger rows; the triggers keep the cached columns correct. The cached
-columns exist only to make reads cheap.
-
-## Indexes
-
-Hot paths are covered: `matches(campaign_id, kickoff_at)`, `predictions(user_id)`,
-`predictions(match_id)`, `token_ledger(user_id, created_at desc)`, `token_ledger(expires_at)` for
-expiry sweeps, and equivalents on points/purchases/redemptions.
-
-## Scoring rules (default campaign)
-
-| Outcome | Points |
-| --- | --- |
-| Correct winner | 50 |
-| Exact scoreline | 150 |
-| First scoring team | 30 |
-| Perfect match (all three) | 280 (flat) |
-| 7-day streak bonus | +50 |
-
-Tokens: ₹100 spent = 1 token; tokens expire after 30 days. Predictions close 10 minutes before
-kickoff. All values are read from the active campaign's `rules` JSONB, not hardcoded.
+All balance-changing writes happen through security-definer functions in `0002_functions.sql`.

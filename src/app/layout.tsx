@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     description: APP.description,
     type: 'website',
   },
-  icons: { icon: '/icon.svg', apple: '/icon.svg' },
+  icons: { icon: '/icon.png', apple: '/icon.png' },
 }
 
 export const viewport: Viewport = {

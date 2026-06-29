@@ -1,7 +1,6 @@
 import { Suspense } from 'react'
 import { Hero } from '@/features/home/hero'
-import { StreakCard } from '@/features/home/streak-card'
-import { EarnBanner } from '@/features/home/earn-banner'
+import { CampaignBanner } from '@/features/home/campaign-banner'
 import { MatchList } from '@/features/matches/match-list'
 import { SectionHeader } from '@/components/ui/section-header'
 import { LiveDot } from '@/components/ui/badge'
@@ -13,8 +12,7 @@ export default function HomePage() {
       <Hero />
 
       <div className="relative z-10 -mt-5 rounded-t-[28px] bg-bg pb-3 pt-1 shadow-[0_-12px_30px_rgba(8,26,22,0.14)]">
-        <StreakCard />
-        <EarnBanner />
+        <CampaignBanner />
 
         <SectionHeader
           title={

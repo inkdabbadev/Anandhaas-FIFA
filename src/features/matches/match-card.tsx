@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/app-store'
-import { Badge, LiveDot } from '@/components/ui/badge'
+import { LiveDot } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { matchTimeLabel, isPredictionOpen, cn } from '@/lib/utils'
-import { Check, Lock } from 'lucide-react'
+import { Check, Flag, Lock } from 'lucide-react'
 import type { Match } from '@/types'
 
 export function MatchCard({ match, liveMinute }: { match: Match; liveMinute?: number }) {
@@ -15,9 +17,9 @@ export function MatchCard({ match, liveMinute }: { match: Match; liveMinute?: nu
   const open = isPredictionOpen(match)
   const predicted = !!prediction
 
-  function handleClick() {
+  function handleOpen() {
     if (predicted) {
-      pushToast('You’ve already predicted this match', 'info')
+      pushToast('You have already predicted this match', 'info')
       return
     }
     if (!open) {
@@ -27,64 +29,119 @@ export function MatchCard({ match, liveMinute }: { match: Match; liveMinute?: nu
     openSheet(match.id)
   }
 
+  const statusColor =
+    prediction?.status === 'won'
+      ? 'text-green'
+      : prediction?.status === 'lost'
+        ? 'text-red'
+        : 'text-gold'
+
   return (
-    <article
+    <motion.article
+      initial={{ y: 16, opacity: 0 }}
+      whileInView={{ y: 0, opacity: 1 }}
+      viewport={{ once: true, margin: '0px 0px -48px 0px' }}
+      transition={{ duration: 0.28, ease: 'easeOut' }}
+      whileTap={{ scale: 0.988 }}
       className={cn(
-        'overflow-hidden rounded-[20px] border bg-card transition-all duration-200 active:scale-[0.985]',
+        'overflow-hidden rounded-[20px] border bg-card will-change-transform',
         predicted ? 'border-[1.5px] border-gold-border shadow-float' : 'border-border shadow-card'
       )}
     >
-      <div className="flex items-center justify-between bg-dark px-3.5 py-2">
-        <span className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-white/90">
-          {match.status === 'live' ? (
-            <LiveDot />
-          ) : null}
-          <span className="text-fifa-light">{match.competition}</span>
-          <span className="text-[var(--on-dark-dim)]">· {match.group_name}</span>
+      <div className="flex items-center justify-between bg-dark px-4 py-2.5">
+        <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium">
+          {match.status === 'live' ? <LiveDot /> : null}
+          <span className="truncate text-fifa-light">{match.competition}</span>
+          <span className="shrink-0 text-[var(--on-dark-dim)]">·</span>
+          <span className="truncate text-[var(--on-dark-dim)]">{match.group_name}</span>
         </span>
-        <span className="text-[9px] font-medium text-[var(--on-dark-dim)]">
+        <span className="ml-2 shrink-0 text-xs font-medium text-[var(--on-dark-dim)]">
           {matchTimeLabel(match.kickoff_at, match.status, liveMinute)}
         </span>
       </div>
 
-      <div className="p-3.5">
-        <div className="mb-3 flex items-center gap-1.5">
-          <TeamSide name={match.home_team.name} flag={match.home_team.flag} ranking={match.home_team.ranking} />
-          <span className="min-w-6 text-center text-xs font-bold text-muted">VS</span>
-          <TeamSide name={match.away_team.name} flag={match.away_team.flag} ranking={match.away_team.ranking} />
+      <div className="p-4">
+        <div className="mb-3 flex items-start gap-1.5">
+          <TeamSide
+            key={`${match.home_team.flag}-${match.home_team.flagFallback ?? ''}`}
+            name={match.home_team.name}
+            flag={match.home_team.flag}
+            fallback={match.home_team.flagFallback}
+            ranking={match.home_team.ranking}
+          />
+          <span className="mt-8 min-w-6 text-center text-xs font-bold text-muted">VS</span>
+          <TeamSide
+            key={`${match.away_team.flag}-${match.away_team.flagFallback ?? ''}`}
+            name={match.away_team.name}
+            flag={match.away_team.flag}
+            fallback={match.away_team.flagFallback}
+            ranking={match.away_team.ranking}
+          />
         </div>
 
-        <div className="flex items-center gap-2">
-          {predicted ? (
-            <div className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-bg px-3 py-2.5 text-xs font-semibold text-green">
-              <Check className="h-4 w-4" />
-              {prediction.home_goals}–{prediction.away_goals} · {prediction.winner} wins
-            </div>
-          ) : open ? (
-            <Button size="sm" block onClick={handleClick}>
-              Predict now
-            </Button>
-          ) : (
-            <div className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-bg px-3 py-2.5 text-xs font-semibold text-muted">
-              <Lock className="h-3.5 w-3.5" />
-              Predictions closed
-            </div>
-          )}
-          <Badge variant="gold" className="px-2.5 py-1.5">
-            {match.token_cost} token{match.token_cost > 1 ? 's' : ''}
-          </Badge>
-        </div>
+        {predicted ? (
+          <div className="flex min-h-12 items-center justify-between gap-3 rounded-xl bg-gold-bg px-3.5 py-3">
+            <span className="flex shrink-0 items-center gap-2 text-sm font-semibold text-mid">
+              <Lock className="h-4 w-4 text-gold" /> Your pick
+            </span>
+            <span className={cn('flex min-w-0 items-center gap-1.5 text-right text-sm font-bold', statusColor)}>
+              {prediction.status === 'won' && <Check className="h-4 w-4 shrink-0" />}
+              <span className="truncate">{prediction.label}</span>
+            </span>
+          </div>
+        ) : open ? (
+          <Button size="md" block onClick={handleOpen}>
+            Predict - it is free
+          </Button>
+        ) : (
+          <div className="flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-bg px-3 py-3 text-sm font-semibold text-muted">
+            <Lock className="h-4 w-4" /> Predictions closed
+          </div>
+        )}
       </div>
-    </article>
+    </motion.article>
   )
 }
 
-function TeamSide({ name, flag, ranking }: { name: string; flag: string; ranking: string | null }) {
+function TeamSide({
+  name,
+  flag,
+  fallback,
+  ranking,
+}: {
+  name: string
+  flag: string
+  fallback?: string | null
+  ranking: string | null
+}) {
+  const [failedPrimary, setFailedPrimary] = useState(false)
+  const src = failedPrimary && fallback ? fallback : flag
+
   return (
-    <div className="flex-1 text-center">
-      <span className="mb-1 block text-[28px] leading-none">{flag}</span>
-      <div className="text-sm font-semibold text-dark">{name}</div>
-      {ranking && <div className="mt-0.5 text-[11px] text-muted">{ranking}</div>}
+    <div className="min-w-0 flex-1 text-center">
+      <span className="mx-auto mb-1 grid h-9 w-12 place-items-center overflow-hidden rounded-md border border-border bg-bg">
+        {isImageFlag(src) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt={`${name} flag`}
+            className="h-full w-full object-contain p-0.5"
+            onError={() => {
+              if (fallback && src !== fallback) setFailedPrimary(true)
+            }}
+          />
+        ) : src ? (
+          <span className="text-[28px] leading-none">{src}</span>
+        ) : (
+          <Flag className="h-4 w-4 text-muted" />
+        )}
+      </span>
+      <div className="line-clamp-2 min-h-[34px] text-sm font-semibold leading-tight text-dark">{name}</div>
+      {ranking && <div className="mt-0.5 truncate text-[11px] text-muted">{ranking}</div>}
     </div>
   )
+}
+
+function isImageFlag(value: string): boolean {
+  return value.startsWith('/') || value.startsWith('http://') || value.startsWith('https://')
 }

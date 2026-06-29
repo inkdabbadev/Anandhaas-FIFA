@@ -1,18 +1,24 @@
 import { z } from 'zod'
 
-/** Phone in E.164-ish Indian format. */
 export const phoneSchema = z
   .string()
   .trim()
-  .regex(/^(\+91[\s-]?)?[6-9]\d{9}$/, 'Enter a valid Indian mobile number')
+  .refine((value) => {
+    const digits = value.replace(/\D/g, '')
+    const mobile = digits.startsWith('91') && digits.length === 12 ? digits.slice(2) : digits
+
+    return /^[6-9]\d{9}$/.test(mobile)
+  }, 'Enter a valid Indian mobile number')
+
+export const emailSchema = z.email('Enter a valid email address').trim().toLowerCase()
 
 export const otpSchema = z
   .string()
   .trim()
   .regex(/^\d{6}$/, 'Enter the 6-digit code')
 
-export const loginSchema = z.object({ phone: phoneSchema })
-export const verifySchema = z.object({ phone: phoneSchema, otp: otpSchema })
+export const loginSchema = z.object({ phone: phoneSchema, email: emailSchema })
+export const verifySchema = z.object({ phone: phoneSchema, email: emailSchema, otp: otpSchema })
 
 export const predictionSchema = z.object({
   matchId: z.string().min(1),
@@ -22,7 +28,6 @@ export const predictionSchema = z.object({
   firstScorerTeam: z.string().nullable(),
 })
 
-/** Admin: create / edit a match. */
 export const matchSchema = z.object({
   homeTeamName: z.string().min(1),
   homeTeamFlag: z.string().min(1),
@@ -37,14 +42,12 @@ export const matchSchema = z.object({
   venue: z.string().optional(),
 })
 
-/** Admin: enter a result. */
 export const resultSchema = z.object({
   homeScore: z.coerce.number().int().min(0).max(30),
   awayScore: z.coerce.number().int().min(0).max(30),
   firstScorerTeam: z.string().nullable(),
 })
 
-/** Admin: create / edit a reward. */
 export const rewardSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),

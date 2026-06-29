@@ -2,53 +2,34 @@
 
 ## Principles
 
-- **UI-first.** Screens were perfected against seeded data before any backend existed.
-- **One data seam.** All reads funnel through `src/services/data-service.ts`. Swapping mock →
-  Supabase changes implementations behind that seam, never the screens.
-- **Server Components by default.** Client Components only where interaction/state demands it
-  (`'use client'` is the exception, not the rule).
-- **Ledger is truth.** Token and point balances are derived from append-only ledgers; the
-  `users.token_balance` / `season_points` columns are caches maintained by triggers.
-- **Campaign engine.** No seasonal concept is hardcoded — it's data in a `campaigns` row.
+- UI-first customer experience backed by seeded data while the live backend is connected.
+- One data seam: screens should read through `src/services/data-service.ts` or the Zustand store, not direct database calls.
+- SQL owns balance-changing rules through RPCs and RLS.
+- Campaign data lives in `campaigns`, `matches`, and `offers`, so seasonal changes do not require UI rewrites.
 
 ## Layers
 
+```text
+Customer routes and feature modules
+  -> data-service / store
+  -> mock data now, Supabase repositories later
+  -> Supabase Postgres migrations, RLS, triggers, RPCs
 ```
- Screens (app/, features/)                 ← Server + Client Components
-        │  imports
-        ▼
- data-service.ts  ─────────────┐           ← the single seam
-        │ mock                 │ live (Phase 2)
-        ▼                      ▼
- lib/mock/data.ts        repositories/*     ← Supabase access (RLS / admin client)
-                               │
-                               ▼
-                         Supabase Postgres   ← migrations + RLS + triggers + views
-```
-
-Cross-cutting services that are not simple reads:
-
-- **`purchase-service.ts`** — normalises POS / Shopify / CSV / webhook / manual sources into one
-  `recordPurchase` that credits ledgers atomically.
-- **`notification-service.ts`** — event-driven fan-out across WhatsApp / Push / SMS / Email /
-  In-App via per-event channel routing.
-- **`features/predictions/scoring.ts`** — pure, server-authoritative scoring shared by settlement.
 
 ## State
 
-- **Server state** is fetched in Server Components and passed down.
-- **Client/session state** (token balance, streak, open prediction sheet, optimistic predictions,
-  toasts) lives in a single Zustand store (`store/app-store.ts`), hydrated once on mount by
-  `StoreHydrator`.
+The current customer app uses an in-memory Zustand store for testing. Refreshing the browser clears local users, predictions, claims, matches, and offers back to seeded mock data.
 
-## Auth & routing
+## Backend
 
-- Phone OTP via Supabase Auth (Phase 1 uses a mock `123456` flow).
-- `middleware.ts` refreshes the session cookie, gates the `(app)` and `/admin` route groups, and
-  enforces the admin role against the `admins` table. In mock mode it is a pass-through.
+The current database model is an open campaign:
 
-## Rendering & performance
+- one free 1X2 prediction per match
+- correct predictions earn points at settlement
+- offers create pending claims
+- points are deducted only when a claim is redeemed by admin
+- `point_ledger` is the source of truth for point changes
 
-- Static prerender for all routes; dynamic data streams via `<Suspense>` with skeleton fallbacks.
-- Fonts via `next/font` (Playfair Display + DM Sans), self-hosted & preloaded.
-- Lucide icons tree-shaken; no heavy animation libraries on the critical path.
+## Auth & Routing
+
+Phone and email OTP delivery will back the production login flow. `proxy.ts` handles customer-route session refresh/gating when Supabase is configured. The admin console is a separate application.

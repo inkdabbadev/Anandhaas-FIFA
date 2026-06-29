@@ -9,7 +9,7 @@ const button = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-gold text-dark shadow-[var(--shadow-gold)] hover:brightness-105 disabled:bg-border disabled:text-muted disabled:shadow-none',
+        primary: 'bg-gold text-white shadow-[var(--shadow-gold)] hover:brightness-105 disabled:bg-border disabled:text-muted disabled:shadow-none',
         dark: 'bg-dark text-gold-light hover:bg-dark-2 disabled:opacity-50',
         success: 'bg-green text-white shadow-[0_6px_18px_rgba(21,128,61,0.25)] hover:brightness-105 disabled:bg-border disabled:text-muted disabled:shadow-none',
         outline: 'border border-border-2 bg-card text-mid hover:bg-gold-bg hover:border-gold-border',

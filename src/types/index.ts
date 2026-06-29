@@ -71,6 +71,7 @@ export interface CampaignRules {
 export interface Team {
   name: string
   flag: string
+  flagFallback?: string | null
   ranking: string | null
 }
 

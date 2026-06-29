@@ -1,19 +1,10 @@
 import { AppShell } from '@/components/layout/app-shell'
-import { StoreHydrator } from '@/components/layout/store-hydrator'
-import { getCurrentUser, getPredictions } from '@/services/data-service'
+import { AuthGate } from '@/components/layout/auth-gate'
 
-/**
- * Authenticated app group. In Phase 2 this layout (a Server Component) also
- * enforces the session — redirecting to /login when there is no user — while
- * the data fetch becomes a real Supabase query.
- */
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [user, predictions] = await Promise.all([getCurrentUser(), getPredictions()])
-
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <StoreHydrator user={user} predictions={predictions} />
+    <AuthGate>
       <AppShell>{children}</AppShell>
-    </>
+    </AuthGate>
   )
 }

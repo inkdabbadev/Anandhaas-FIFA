@@ -28,11 +28,13 @@
   --bg: #f3f6f2;
   --card: #ffffff;
 
-  /* Action accent */
-  --gold: #93c5fd;
-  --gold-light: #dbeafe;
-  --gold-bg: #eff6ff;
-  --gold-border: #bfdbfe;
+  /* Action accent — FIFA cobalt (kept under the legacy "gold" token names so the
+     whole UI re-skins from here). Rich enough for white-text buttons + readable
+     accent text on light surfaces. */
+  --gold: #2563eb;        /* primary accent: button bg, links, accent text on light */
+  --gold-light: #93c5fd;  /* on-dark accent: hero highlight, balances, token chip */
+  --gold-bg: #eaf1fe;     /* soft chip / badge background */
+  --gold-border: #c2d6fb;
 
   /* Text */
   --mid: #44605a;
@@ -53,7 +55,7 @@
   --shadow-sm: 0 1px 2px rgba(8, 26, 22, 0.04), 0 1px 3px rgba(8, 26, 22, 0.06);
   --shadow-md: 0 2px 6px rgba(8, 26, 22, 0.05), 0 10px 26px rgba(8, 26, 22, 0.08);
   --shadow-lg: 0 4px 10px rgba(8, 26, 22, 0.06), 0 20px 44px rgba(8, 26, 22, 0.14);
-  --shadow-gold: 0 8px 22px rgba(147, 197, 253, 0.28);
+  --shadow-gold: 0 8px 22px rgba(37, 99, 235, 0.28);
 }
 
 @theme inline {
@@ -114,6 +116,25 @@ h1, h2, h3 {
   letter-spacing: -0.02em;
 }
 
+input.auth-dark-input,
+input.auth-dark-input:-webkit-autofill,
+input.auth-dark-input:-webkit-autofill:hover,
+input.auth-dark-input:-webkit-autofill:focus,
+input.auth-dark-input:-webkit-autofill:active {
+  background-color: var(--dark-2) !important;
+  color: var(--bg) !important;
+  caret-color: var(--bg);
+  -webkit-text-fill-color: var(--bg) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--dark-2) inset !important;
+  box-shadow: 0 0 0 1000px var(--dark-2) inset !important;
+}
+
+input.auth-dark-input::selection {
+  background: rgba(147, 197, 253, 0.28);
+  color: var(--bg);
+  -webkit-text-fill-color: var(--bg);
+}
+
 /* Tabular figures for stats, scores, balances — keeps numbers from jittering. */
 .tnum {
   font-variant-numeric: tabular-nums;
@@ -138,11 +159,11 @@ h1, h2, h3 {
   z-index: 0;
   background: url("/FFF.png") no-repeat;
   background-position: center center;
-  background-size: min(92vw, 430px) auto;
-  opacity: 0.13;
-  mix-blend-mode: luminosity;
-  -webkit-mask-image: radial-gradient(closest-side at 50% 50%, #000 0%, rgba(0, 0, 0, 0.62) 44%, transparent 76%);
-  mask-image: radial-gradient(closest-side at 50% 50%, #000 0%, rgba(0, 0, 0, 0.62) 44%, transparent 76%);
+  background-size: min(86vw, 400px) auto;
+  opacity: 0.15;
+  filter: saturate(1.25);
+  -webkit-mask-image: radial-gradient(closest-side at 50% 50%, #000 0%, rgba(0, 0, 0, 0.5) 48%, transparent 78%);
+  mask-image: radial-gradient(closest-side at 50% 50%, #000 0%, rgba(0, 0, 0, 0.5) 48%, transparent 78%);
   pointer-events: none;
 }
 .bg-brand > * {
@@ -191,6 +212,36 @@ h1, h2, h3 {
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in-up { animation: fade-in-up 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+
+.goal-net {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 13px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 13px);
+  border-top: 3px solid rgba(255, 255, 255, 0.85);
+  border-left: 3px solid rgba(255, 255, 255, 0.6);
+  border-right: 3px solid rgba(255, 255, 255, 0.6);
+  border-radius: 4px 4px 0 0;
+}
+@keyframes ball-kick {
+  0% { transform: translate(-50%, 34px) scale(0.55); opacity: 0; }
+  35% { opacity: 1; }
+  70% { transform: translate(-50%, -34px) scale(1.18); }
+  100% { transform: translate(-50%, -24px) scale(1); opacity: 1; }
+}
+.ball-kick { animation: ball-kick 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes goal-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  55% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.goal-pop { animation: goal-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes net-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-1px); }
+}
+.net-shake { animation: net-shake 0.4s ease-out; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

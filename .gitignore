@@ -40,3 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 node_modules/.cache
+
+# standalone admin app (nested Next.js project)
+/admin/node_modules
+/admin/.next/
+/admin/next-env.d.ts
+/admin/*.tsbuildinfo

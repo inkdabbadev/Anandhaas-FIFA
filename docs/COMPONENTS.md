@@ -1,51 +1,39 @@
 # Components
 
-Atomic, reusable, theme-driven. Colours/typography come from CSS variables defined in
-`globals.css` and surfaced to Tailwind via `@theme inline` (e.g. `bg-dark`, `text-gold`,
-`border-border`). No magic hex values in components.
+Theme tokens live in `src/app/globals.css` and flow into Tailwind through `@theme inline`.
 
-## UI primitives — `components/ui/`
+## UI
 
-| Component | Notes |
+| Component | Purpose |
 | --- | --- |
-| `Button` | `cva` variants: primary, dark, success, outline, ghost, danger × sizes × `block`. |
-| `Card` / `CardBody` | Rounded, soft-shadow surface. |
-| `Badge` / `LiveDot` | Pill labels (gold/green/red/muted/dark) + pulsing live indicator. |
-| `Skeleton` + `MatchCardSkeleton` / `RowSkeleton` | Shimmer loading states. |
-| `Toast` (`ToastViewport`) | Store-driven, auto-dismiss, success/error/info. |
-| `Sheet` | Accessible bottom sheet — backdrop, scroll-lock, Esc-to-close, focus dialog. |
-| `EmptyState` / `ErrorState` | Consistent zero/error UI with optional retry. |
-| `SectionHeader` | Title + optional link. |
-| `ProgressDots` | Streak / progress segments. |
-| `PageHero` | Shared dark editorial header. |
-| `Segmented` | Tab switcher (leaderboard scope, token tabs). |
+| `Button` | Shared button variants and sizes. |
+| `Badge` / `LiveDot` | Status pills and live indicator. |
+| `Sheet` | Bottom sheet used by prediction flow. |
+| `ToastViewport` | Store-driven toast notifications. |
+| `EmptyState` | Shared zero-state UI. |
+| `Segmented` | Compact tab switcher. |
+| `Skeleton` | Loading placeholders. |
 
-## Layout — `components/layout/`
+## Layout
 
-`TopNav` (brand + token pill) · `BottomNav` (5-tab, active-aware) · `AppShell` (centres the
-≤430px device column, hosts the global `PredictionSheet`) · `StoreHydrator` (seeds Zustand once).
+| Component | Purpose |
+| --- | --- |
+| `AppShell` | Mobile app frame and global prediction sheet host. |
+| `AuthGate` | Redirects unsigned users to login/welcome in mock mode. |
+| `TopNav` | Customer header and points pill. |
+| `BottomNav` | Customer tab navigation. |
 
-## Admin — `components/admin/`
+## Features
 
-`AdminSidebar` + `AdminMobileNav` · `AdminHeader` / `StatCard` / `DataTable` / `Td` ·
-`ResultEntryCard` (interactive settlement) · `ManualGrantForm` (RHF + Zod).
+| Folder | Purpose |
+| --- | --- |
+| `auth/` | Phone, email, and OTP login flow. |
+| `home/` | Home hero and campaign banner. |
+| `matches/` | Match feed and match cards. |
+| `predictions/` | Interactive prediction sheet. |
+| `leaderboard/` | Leaderboard UI. |
+| `rewards/` | Offers and claimed rewards. |
+| `tiers/` | Tier progress. |
+| `profile/` | Customer profile and sign-out. |
 
-## Feature modules — `features/`
-
-Each screen's logic is colocated:
-
-- `home/` — `Hero`, `StreakCard`, `EarnBanner`
-- `matches/` — `MatchCard`, `MatchList` (async server component)
-- `predictions/` — `PredictionSheet`, `scoring.ts`
-- `leaderboard/` — `LeaderboardView` (scope tabs, search)
-- `tokens/` — `TokensView` (earn/redeem/history/active tabs), `RewardQR`
-- `tiers/` — `TiersView`
-- `profile/` — `ProfileView`
-- `auth/` — `LoginFlow` (phone → OTP state machine)
-
-## Conventions
-
-- Server Component unless it needs state/events/browser APIs.
-- Props typed; no `any`. Variants via `class-variance-authority`, merged with `cn()`.
-- Accessibility: `aria-*`, `role`, focus-visible rings, keyboard handling on interactive elements.
-- Mobile-first; the app column is capped at 430px and the admin is desktop-first with mobile fallback.
+The admin console is maintained as a separate application and is not part of this customer app component tree.
