@@ -3,14 +3,15 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { useAppStore } from '@/store/app-store'
 import { formatNumber } from '@/lib/utils'
+import { POINTS } from '@/constants'
 
 /** Editorial hero with co-brand line + live stat tiles. */
 export function Hero() {
   const user = useAppStore((s) => (s.currentPhone ? s.users[s.currentPhone] : null))
   const reduceMotion = useReducedMotion()
-  const points = user?.points ?? 0
   const predictions = user?.predictionsCount ?? 0
   const correct = user?.correctCount ?? 0
+  const totalPoints = correct * POINTS.CORRECT
 
   return (
     <motion.section
@@ -48,7 +49,7 @@ export function Hero() {
           show: { transition: { staggerChildren: 0.06, delayChildren: 0.12 } },
         }}
       >
-        <Stat value={formatNumber(points)} label="Points" />
+        <Stat value={formatNumber(totalPoints)} label="Total points" />
         <Stat value={predictions} label="Predictions" />
         <Stat value={correct} label="Correct" />
       </motion.div>

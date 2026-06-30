@@ -1,21 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/app-store'
 import { LiveDot } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { matchTimeLabel, isPredictionOpen, cn } from '@/lib/utils'
-import { Check, Flag, Lock } from 'lucide-react'
+import { Ban, Check, Flag, Lock } from 'lucide-react'
 import type { Match } from '@/types'
 
-export function MatchCard({ match, liveMinute }: { match: Match; liveMinute?: number }) {
+export function MatchCard({
+  match,
+  liveMinute,
+  showPredictionCloseTimer = false,
+}: {
+  match: Match
+  liveMinute?: number
+  showPredictionCloseTimer?: boolean
+}) {
   const prediction = useAppStore((s) => s.predictions[match.id])
   const openSheet = useAppStore((s) => s.openSheet)
   const pushToast = useAppStore((s) => s.pushToast)
+  const closeCountdown = usePredictionCloseCountdown(
+    showPredictionCloseTimer ? match.prediction_closes_at : null
+  )
 
   const open = isPredictionOpen(match)
   const predicted = !!prediction
+  const finished = match.status === 'finished'
+  const cancelled = match.status === 'cancelled'
 
   function handleOpen() {
     if (predicted) {
@@ -45,10 +58,14 @@ export function MatchCard({ match, liveMinute }: { match: Match; liveMinute?: nu
       whileTap={{ scale: 0.988 }}
       className={cn(
         'overflow-hidden rounded-[20px] border bg-card will-change-transform',
-        predicted ? 'border-[1.5px] border-gold-border shadow-float' : 'border-border shadow-card'
+        cancelled
+          ? 'border-red/20 bg-red-bg/40 shadow-card'
+          : predicted
+            ? 'border-[1.5px] border-gold-border shadow-float'
+            : 'border-border shadow-card'
       )}
     >
-      <div className="flex items-center justify-between bg-dark px-4 py-2.5">
+      <div className={cn('flex items-center justify-between px-4 py-2.5', cancelled ? 'bg-red' : 'bg-dark')}>
         <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium">
           {match.status === 'live' ? <LiveDot /> : null}
           <span className="truncate text-fifa-light">{match.competition}</span>
@@ -56,7 +73,7 @@ export function MatchCard({ match, liveMinute }: { match: Match; liveMinute?: nu
           <span className="truncate text-[var(--on-dark-dim)]">{match.group_name}</span>
         </span>
         <span className="ml-2 shrink-0 text-xs font-medium text-[var(--on-dark-dim)]">
-          {matchTimeLabel(match.kickoff_at, match.status, liveMinute)}
+          {closeCountdown ?? matchTimeLabel(match.kickoff_at, match.status, liveMinute)}
         </span>
       </div>
 
@@ -69,7 +86,7 @@ export function MatchCard({ match, liveMinute }: { match: Match; liveMinute?: nu
             fallback={match.home_team.flagFallback}
             ranking={match.home_team.ranking}
           />
-          <span className="mt-8 min-w-6 text-center text-xs font-bold text-muted">VS</span>
+          <ResultCenter match={match} cancelled={cancelled} />
           <TeamSide
             key={`${match.away_team.flag}-${match.away_team.flagFallback ?? ''}`}
             name={match.away_team.name}
@@ -79,14 +96,27 @@ export function MatchCard({ match, liveMinute }: { match: Match; liveMinute?: nu
           />
         </div>
 
-        {predicted ? (
+        {cancelled ? (
+          <div className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-red/20 bg-white px-3 py-3 text-sm font-bold text-red">
+            <Ban className="h-4 w-4" /> Match cancelled
+          </div>
+        ) : predicted ? (
           <div className="flex min-h-12 items-center justify-between gap-3 rounded-xl bg-gold-bg px-3.5 py-3">
             <span className="flex shrink-0 items-center gap-2 text-sm font-semibold text-mid">
               <Lock className="h-4 w-4 text-gold" /> Your pick
             </span>
-            <span className={cn('flex min-w-0 items-center gap-1.5 text-right text-sm font-bold', statusColor)}>
-              {prediction.status === 'won' && <Check className="h-4 w-4 shrink-0" />}
-              <span className="truncate">{prediction.label}</span>
+            <span className="flex min-w-0 flex-col items-end gap-0.5 text-right">
+              <span className={cn('flex min-w-0 items-center gap-1.5 text-sm font-bold', statusColor)}>
+                {prediction.status === 'won' && <Check className="h-4 w-4 shrink-0" />}
+                <span className="truncate">{prediction.label}</span>
+              </span>
+              {finished && (
+                <span className={cn('text-[11px] font-bold', prediction.pointsEarned > 0 ? 'text-green' : 'text-muted')}>
+                  {prediction.pointsEarned > 0
+                    ? `+${prediction.pointsEarned} pts`
+                    : `+0 pts`}
+                </span>
+              )}
             </span>
           </div>
         ) : open ? (
@@ -95,12 +125,88 @@ export function MatchCard({ match, liveMinute }: { match: Match; liveMinute?: nu
           </Button>
         ) : (
           <div className="flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-bg px-3 py-3 text-sm font-semibold text-muted">
-            <Lock className="h-4 w-4" /> Predictions closed
+            <Lock className="h-4 w-4" /> {finished ? 'Match finished' : 'Predictions closed'}
           </div>
         )}
       </div>
     </motion.article>
   )
+}
+
+function ResultCenter({ match, cancelled }: { match: Match; cancelled: boolean }) {
+  const finished = match.status === 'finished'
+  const hasScore = match.home_score != null && match.away_score != null
+
+  if (cancelled) {
+    return (
+      <span className="mt-7 flex min-w-16 flex-col items-center text-center">
+        <span className="rounded-lg bg-red px-2.5 py-1 text-[11px] font-extrabold uppercase leading-none text-white">
+          Cancelled
+        </span>
+      </span>
+    )
+  }
+
+  if (!finished || !hasScore) {
+    return <span className="mt-8 min-w-6 text-center text-xs font-bold text-muted">VS</span>
+  }
+
+  return (
+    <span className="mt-7 flex min-w-12 flex-col items-center text-center">
+      <span className="tnum rounded-lg bg-dark px-2.5 py-1 text-sm font-extrabold leading-none text-bg">
+        {match.home_score} - {match.away_score}
+      </span>
+      <span className="mt-1 max-w-[82px] text-[10px] font-bold leading-tight text-gold">
+        {resultLabel(match)}
+      </span>
+    </span>
+  )
+}
+
+function resultLabel(match: Match): string {
+  const pick =
+    match.winning_pick ??
+    (match.home_score != null && match.away_score != null
+      ? match.home_score > match.away_score
+        ? 'home'
+        : match.away_score > match.home_score
+          ? 'away'
+          : 'draw'
+      : null)
+
+  if (pick === 'home') return `${match.home_team.name} won`
+  if (pick === 'away') return `${match.away_team.name} won`
+  return 'Match draw'
+}
+
+function usePredictionCloseCountdown(closesAt: string | null): string | null {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!closesAt) return
+
+    const interval = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(interval)
+  }, [closesAt])
+
+  if (!closesAt) return null
+
+  const remainingMs = new Date(closesAt).getTime() - now
+  if (remainingMs <= 0) return 'Closing now'
+
+  return `Closes ${formatRemainingTime(remainingMs)}`
+}
+
+function formatRemainingTime(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const days = Math.floor(totalSeconds / 86_400)
+  const hours = Math.floor((totalSeconds % 86_400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  return `${minutes}m ${seconds.toString().padStart(2, '0')}s`
 }
 
 function TeamSide({

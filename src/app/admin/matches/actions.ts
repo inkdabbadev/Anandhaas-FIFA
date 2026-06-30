@@ -9,6 +9,7 @@ export type CreateMatchState = {
 }
 
 export type PublishResultState = CreateMatchState
+export type CancelMatchState = CreateMatchState
 
 const initialState: CreateMatchState = {
   status: 'idle',
@@ -91,6 +92,7 @@ export async function publishMatchResultAction(
   const matchId = String(formData.get('match_id') ?? '').trim()
   const team1Score = Number(String(formData.get('team1_score') ?? '').trim())
   const team2Score = Number(String(formData.get('team2_score') ?? '').trim())
+  const selectedWinningPick = String(formData.get('winning_pick') ?? '').trim()
 
   if (!matchId) return { status: 'error', message: 'Match id is missing.' }
   if (!Number.isInteger(team1Score) || team1Score < 0) {
@@ -100,17 +102,24 @@ export async function publishMatchResultAction(
     return { status: 'error', message: 'Enter a valid Team 2 score.' }
   }
 
-  const winningPick = team1Score > team2Score ? 'team1' : team2Score > team1Score ? 'team2' : 'draw'
+  const winningPick = resolveWinningPick(team1Score, team2Score, selectedWinningPick)
+  if (!winningPick) {
+    return { status: 'error', message: 'Choose who won when both teams have the same goals.' }
+  }
+
   const admin = createAdminClient()
 
   const { data: match, error: matchError } = await admin
     .from('matches')
-    .select('id,points_processed')
+    .select('id,status,points_processed')
     .eq('id', matchId)
     .maybeSingle()
 
   if (matchError) return { status: 'error', message: matchError.message }
   if (!match) return { status: 'error', message: 'Match was not found.' }
+  if (match.status === 'cancelled') {
+    return { status: 'error', message: 'Cancelled matches cannot publish results.' }
+  }
   if (match.points_processed) {
     return { status: 'error', message: 'Points were already processed for this match.' }
   }
@@ -209,6 +218,67 @@ export async function publishMatchResultAction(
     status: 'success',
     message: `Result published. Correct predictions earned ${CORRECT_PREDICTION_POINTS} points.`,
   }
+}
+
+export async function cancelMatchAction(
+  previousState: CancelMatchState = initialState,
+  formData: FormData
+): Promise<CancelMatchState> {
+  void previousState
+
+  const matchId = String(formData.get('match_id') ?? '').trim()
+  if (!matchId) return { status: 'error', message: 'Match id is missing.' }
+
+  const admin = createAdminClient()
+  const { data: match, error: matchError } = await admin
+    .from('matches')
+    .select('id,status,points_processed')
+    .eq('id', matchId)
+    .maybeSingle()
+
+  if (matchError) return { status: 'error', message: matchError.message }
+  if (!match) return { status: 'error', message: 'Match was not found.' }
+  if (match.status === 'cancelled') return { status: 'success', message: 'Match is already cancelled.' }
+  if (match.status === 'completed' || match.points_processed) {
+    return { status: 'error', message: 'This match already has processed points.' }
+  }
+
+  const { error: updateError } = await admin
+    .from('matches')
+    .update({
+      status: 'cancelled',
+      team1_score: null,
+      team2_score: null,
+      winning_pick: null,
+      result_published: false,
+      points_processed: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', matchId)
+
+  if (updateError) return { status: 'error', message: updateError.message }
+
+  revalidatePath('/admin/matches')
+  revalidatePath('/home')
+
+  return { status: 'success', message: 'Match cancelled.' }
+}
+
+function resolveWinningPick(
+  team1Score: number,
+  team2Score: number,
+  selectedWinningPick: string
+): 'team1' | 'draw' | 'team2' | null {
+  if (team1Score > team2Score) return 'team1'
+  if (team2Score > team1Score) return 'team2'
+  if (
+    selectedWinningPick === 'team1' ||
+    selectedWinningPick === 'draw' ||
+    selectedWinningPick === 'team2'
+  ) {
+    return selectedWinningPick
+  }
+  return null
 }
 
 function parseDateTime(value: string): Date | null {

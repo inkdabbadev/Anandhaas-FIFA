@@ -17,7 +17,7 @@ export default function HomePage() {
         <SectionHeader
           title={
             <>
-              <LiveDot /> Live and upcoming
+              <LiveDot /> Matches
             </>
           }
           linkLabel="Rankings"

@@ -6,6 +6,7 @@ import { Card, CardBody } from '@/components/ui/card'
 import { createAdminClient } from '@/lib/supabase/server'
 import { MatchForm, type MatchTeamOption } from './match-form'
 import { ResultForm } from './result-form'
+import { CancelMatchForm } from './cancel-match-form'
 
 export const metadata: Metadata = {
   title: 'Admin Matches',
@@ -149,7 +150,11 @@ function MatchListItem({ match }: { match: MatchRow }) {
     <div className="rounded-2xl border border-border bg-white p-3">
       <div className="mb-3 flex items-center justify-between gap-2">
         <span className="truncate text-xs font-bold text-gold">{match.stage ?? 'Stage not set'}</span>
-        <span className="shrink-0 rounded-full bg-gold-bg px-2 py-0.5 text-[11px] font-bold capitalize text-gold">
+        <span
+          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold capitalize ${
+            match.status === 'cancelled' ? 'bg-red-bg text-red' : 'bg-gold-bg text-gold'
+          }`}
+        >
           {match.status}
         </span>
       </div>
@@ -178,8 +183,9 @@ function MatchListItem({ match }: { match: MatchRow }) {
         team2Name={match.team2?.name ?? 'Team 2'}
         team1Score={match.team1_score}
         team2Score={match.team2_score}
-        processed={match.points_processed}
+        processed={match.points_processed || match.status === 'cancelled'}
       />
+      <CancelMatchForm matchId={match.id} status={match.status} processed={match.points_processed} />
     </div>
   )
 }

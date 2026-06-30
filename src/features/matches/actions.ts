@@ -23,6 +23,7 @@ type MatchRow = {
   status: 'scheduled' | 'live' | 'completed' | 'cancelled'
   team1_score: number | null
   team2_score: number | null
+  winning_pick: 'team1' | 'draw' | 'team2' | null
   is_active: boolean
   created_at: string
   team1: TeamRow | TeamRow[] | null
@@ -74,7 +75,7 @@ export async function loadMatchFeed(userId?: string): Promise<MatchFeedResult> {
     const { data, error } = await admin
       .from('matches')
       .select(
-        'id,stage,group_name,starts_at,prediction_closes_at,status,team1_score,team2_score,is_active,created_at,team1:teams!matches_team1_id_fkey(id,name,code,flag_url,flag_api),team2:teams!matches_team2_id_fkey(id,name,code,flag_url,flag_api)'
+        'id,stage,group_name,starts_at,prediction_closes_at,status,team1_score,team2_score,winning_pick,is_active,created_at,team1:teams!matches_team1_id_fkey(id,name,code,flag_url,flag_api),team2:teams!matches_team2_id_fkey(id,name,code,flag_url,flag_api)'
       )
       .eq('is_active', true)
       .order('display_order', { ascending: true })
@@ -265,6 +266,7 @@ function toUiMatch(row: MatchRow): Match | null {
     status: toUiStatus(row.status),
     home_score: row.team1_score,
     away_score: row.team2_score,
+    winning_pick: toUiWinningPick(row.winning_pick),
     first_scorer_team: null,
     venue: null,
     created_at: row.created_at,
@@ -294,6 +296,13 @@ function toUiPick(pick: PredictionRow['pick']): UiPick {
   if (pick === 'team1') return 'home'
   if (pick === 'team2') return 'away'
   return 'draw'
+}
+
+function toUiWinningPick(pick: MatchRow['winning_pick']): Match['winning_pick'] {
+  if (pick === 'team1') return 'home'
+  if (pick === 'team2') return 'away'
+  if (pick === 'draw') return 'draw'
+  return null
 }
 
 function emptyFeed(message: string): MatchFeedResult {

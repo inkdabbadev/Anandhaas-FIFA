@@ -85,6 +85,7 @@ export interface Match {
   status: MatchStatus
   home_score: number | null
   away_score: number | null
+  winning_pick?: 'home' | 'draw' | 'away' | null
   first_scorer_team: string | null
   venue: string | null
   created_at: string

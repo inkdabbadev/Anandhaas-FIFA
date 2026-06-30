@@ -5,6 +5,7 @@ import { useAppStore } from '@/store/app-store'
 import { initials, formatNumber } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
+import { POINTS } from '@/constants'
 import { ChevronRight, LogOut, Bell, Globe, Shield } from 'lucide-react'
 
 export function ProfileView() {
@@ -16,6 +17,7 @@ export function ProfileView() {
   if (!user) return <ProfileSkeleton />
 
   const accuracy = user.predictionsCount ? Math.round((user.correctCount / user.predictionsCount) * 100) : 0
+  const totalPoints = user.correctCount * POINTS.CORRECT
 
   return (
     <div className="animate-fade-in-up pb-3">
@@ -30,7 +32,7 @@ export function ProfileView() {
 
       <div className="relative z-10 -mt-5 rounded-t-[28px] bg-bg pt-3 shadow-[0_-12px_30px_rgba(8,26,22,0.14)]">
         <div className="grid grid-cols-3 gap-2 px-4 pb-1 pt-2">
-          <Stat value={formatNumber(user.points)} label="Points" />
+          <Stat value={formatNumber(totalPoints)} label="Total points" />
           <Stat value={user.predictionsCount} label="Predictions" />
           <Stat value={`${accuracy}%`} label="Accuracy" />
         </div>
