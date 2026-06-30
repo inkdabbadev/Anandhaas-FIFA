@@ -21,7 +21,7 @@ SQL editor order:
 | Table | Purpose |
 | --- | --- |
 | `campaigns` | Active seasonal campaign, branding, and scoring value. |
-| `profiles` | Customer profile linked 1:1 to `auth.users`; stores unique phone, unique email, name, age, points, tier. |
+| `profiles` | Customer profile linked 1:1 to `auth.users`; stores unique phone, unique email, name, age, and points. |
 | `admins` | Role table for the separate admin application and privileged RPC checks. |
 | `matches` | Admin-authored fixtures with teams, kickoff, prediction close time, score, result. |
 | `predictions` | One locked 1X2 pick per user per match. |

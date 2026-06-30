@@ -14,7 +14,6 @@ export type NotificationEvent =
   | { type: 'prediction_won'; userId: string; points: number; matchLabel: string }
   | { type: 'reward_redeemed'; userId: string; rewardTitle: string; qrCode: string }
   | { type: 'streak_bonus'; userId: string; bonus: number }
-  | { type: 'tier_up'; userId: string; tier: string }
 
 export interface NotificationProvider {
   readonly channel: NotificationChannel
@@ -28,7 +27,6 @@ const ROUTING: Record<NotificationEvent['type'], NotificationChannel[]> = {
   prediction_won: ['push', 'in_app'],
   reward_redeemed: ['whatsapp', 'in_app'],
   streak_bonus: ['in_app', 'push'],
-  tier_up: ['in_app', 'push', 'whatsapp'],
 }
 
 const providers = new Map<NotificationChannel, NotificationProvider>()

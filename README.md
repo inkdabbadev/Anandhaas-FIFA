@@ -68,18 +68,18 @@ See [docs/ROADMAP.md](docs/ROADMAP.md).
 ```
 src/
 ├── app/                  # routes (App Router)
-│   ├── (app)/            # authenticated mobile app group (Home, Leaderboard, Rewards, Tiers, Profile)
+│   ├── (app)/            # authenticated mobile app group (Home, Leaderboard, Rewards, Profile)
 │   ├── welcome/          # landing
 │   ├── login/            # phone + email OTP auth
 │   └── offline/          # PWA offline fallback
 ├── components/           # shared UI (ui/, layout/)
-├── features/             # feature modules (home, matches, predictions, leaderboard, rewards, tiers, profile, auth)
+├── features/             # feature modules (home, matches, predictions, leaderboard, rewards, profile, auth)
 ├── services/             # data-service seam + purchase & notification engines
 ├── repositories/         # Supabase data access (Phase 2)
 ├── store/                # Zustand store
 ├── schemas/              # Zod schemas
 ├── config/               # campaign engine + env
-├── constants/            # tiers, points, nav
+├── constants/            # points, nav
 ├── lib/                  # utils, supabase clients, mock data
 ├── types/                # domain types
 └── providers/            # client providers

@@ -1,7 +1,5 @@
 // ─── Core Domain Types ────────────────────────────────────────────────────────
 
-export type UserTier = 'mithai_fan' | 'sweet_striker' | 'golden_boot' | 'fifa_legend'
-
 export type MatchStatus = 'upcoming' | 'live' | 'finished' | 'cancelled'
 
 export type PredictionStatus = 'pending' | 'won' | 'lost' | 'refunded'
@@ -21,7 +19,6 @@ export interface User {
   phone: string
   name: string | null
   avatar_url: string | null
-  tier: UserTier
   season_points: number
   token_balance: number
   referral_code: string
@@ -177,7 +174,6 @@ export interface LeaderboardEntry {
   user_id: string
   name: string | null
   avatar_url: string | null
-  tier: UserTier
   points: number
   correct_predictions: number
   exact_scores: number

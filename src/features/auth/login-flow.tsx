@@ -355,8 +355,22 @@ function SignupContactStep({
 }) {
   return (
     <StepShell title="Create account" highlight="Verify email" description="Enter your phone and email. We will send a 6-digit OTP to your email.">
-      <DarkInput icon={Phone} label="Phone number" value={phone} onChange={setPhone} placeholder="+91 98765 43210" inputMode="tel" />
-      <DarkInput icon={Mail} label="Email address" value={email} onChange={setEmail} placeholder="you@example.com" type="email" />
+      <DarkInput
+        icon={Phone}
+        label="Phone number"
+        value={phone}
+        onChange={setPhone}
+        placeholder="+91 98765 43210"
+        inputMode="tel"
+      />
+      <DarkInput
+        icon={Mail}
+        label="Email address"
+        value={email}
+        onChange={setEmail}
+        placeholder="you@example.com"
+        type="email"
+      />
       {error && <p className="mt-3 text-xs text-[#f4a8a8]">{error}</p>}
       <Button block size="lg" className="mt-8" disabled={pending} onClick={onSubmit}>
         {pending ? 'Sending OTP...' : 'Send OTP'}
@@ -381,7 +395,7 @@ function LoginIdentifierStep({
 }) {
   return (
     <StepShell title="Login" highlight="Phone or email" description="Use either your registered phone number or email address.">
-      <DarkInput icon={UserRound} label="Phone or email" value={identifier} onChange={setIdentifier} placeholder="98765 43210 or you@example.com" />
+      <DarkInput icon={UserRound} label="Phone or email" value={identifier} onChange={setIdentifier} />
       <Button block size="lg" className="mt-8" disabled={!identifier.trim()} onClick={onSubmit}>
         Continue
       </Button>
@@ -406,8 +420,15 @@ function ProfileStep({
 }) {
   return (
     <StepShell title="Your details" highlight="Almost done" description="Tell us who is playing.">
-      <DarkInput icon={UserRound} label="Name" value={name} onChange={setName} placeholder="Priya Sundaram" />
-      <DarkInput icon={UserRound} label="Age" value={age} onChange={(value) => setAge(value.replace(/\D/g, '').slice(0, 3))} placeholder="27" inputMode="numeric" />
+      <DarkInput icon={UserRound} label="Name" value={name} onChange={setName} placeholder="Your full name" />
+      <DarkInput
+        icon={UserRound}
+        label="Age"
+        value={age}
+        onChange={(value) => setAge(value.replace(/\D/g, '').slice(0, 3))}
+        placeholder="18"
+        inputMode="numeric"
+      />
       {error && <p className="mt-3 text-xs text-[#f4a8a8]">{error}</p>}
       <Button block size="lg" className="mt-8" disabled={name.trim().length < 2 || !age} onClick={onSubmit}>
         Continue
@@ -441,7 +462,16 @@ function MpinLoginStep({
 }) {
   return (
     <StepShell title="Enter MPIN" highlight="6 digits" description={identifier}>
-      <DarkInput icon={LockKeyhole} label="MPIN" value={mpin} onChange={(value) => setMpin(digits(value))} placeholder="••••••" inputMode="numeric" maxLength={6} type="password" />
+      <DarkInput
+        icon={LockKeyhole}
+        label="MPIN"
+        value={mpin}
+        onChange={(value) => setMpin(digits(value))}
+        placeholder="6 digits"
+        inputMode="numeric"
+        maxLength={6}
+        type="password"
+      />
       {error && <p className="mt-3 text-xs text-[#f4a8a8]">{error}</p>}
       <Button block size="lg" className="mt-8" disabled={pending || mpin.length !== 6} onClick={onSubmit}>
         {pending ? 'Checking...' : 'Login'}
@@ -481,8 +511,26 @@ function MpinSetupStep({
 }) {
   return (
     <StepShell title={title} highlight="6 digits" description="Use this MPIN for future logins.">
-      <DarkInput icon={LockKeyhole} label="Set MPIN" value={mpin} onChange={(value) => setMpin(digits(value))} placeholder="••••••" inputMode="numeric" maxLength={6} type="password" />
-      <DarkInput icon={LockKeyhole} label="Confirm MPIN" value={confirmMpin} onChange={(value) => setConfirmMpin(digits(value))} placeholder="••••••" inputMode="numeric" maxLength={6} type="password" />
+      <DarkInput
+        icon={LockKeyhole}
+        label="Set MPIN"
+        value={mpin}
+        onChange={(value) => setMpin(digits(value))}
+        placeholder="6 digits"
+        inputMode="numeric"
+        maxLength={6}
+        type="password"
+      />
+      <DarkInput
+        icon={LockKeyhole}
+        label="Confirm MPIN"
+        value={confirmMpin}
+        onChange={(value) => setConfirmMpin(digits(value))}
+        placeholder="Re-enter MPIN"
+        inputMode="numeric"
+        maxLength={6}
+        type="password"
+      />
       {error && <p className="mt-3 text-xs text-[#f4a8a8]">{error}</p>}
       <Button block size="lg" className="mt-8" disabled={pending || mpin.length !== 6 || confirmMpin.length !== 6} onClick={onSubmit}>
         {pending ? 'Saving...' : 'Continue'}
@@ -510,7 +558,7 @@ function OtpStep({
 
   return (
     <StepShell title={title} highlight="6-digit OTP" description={description}>
-      <DarkInput icon={Mail} label="OTP" value={otp} onChange={(value) => setOtp(digits(value))} placeholder="123456" inputMode="numeric" maxLength={6} />
+      <DarkInput icon={Mail} label="OTP" value={otp} onChange={(value) => setOtp(digits(value))} inputMode="numeric" maxLength={6} />
       {devOtp && <p className="mt-3 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs text-gold-light">Dev OTP: {devOtp}</p>}
       {error && <p className="mt-3 text-xs text-[#f4a8a8]">{error}</p>}
       <Button block size="lg" className="mt-8" disabled={pending || otp.length !== 6} onClick={() => onSubmit(otp)}>
@@ -564,7 +612,7 @@ function DarkInput({
         <input
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="auth-dark-input min-w-0 w-full appearance-none bg-dark-2 py-3.5 text-base text-bg caret-bg placeholder:text-[var(--on-dark-dim)] placeholder:opacity-30 focus:outline-none"
+          className="auth-dark-input min-w-0 w-full appearance-none bg-dark-2 py-3.5 text-base text-bg caret-bg placeholder:text-[var(--on-dark-dim)] placeholder:opacity-20 focus:outline-none"
           {...props}
         />
       </span>

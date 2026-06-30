@@ -1,30 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════════
---  0002_functions.sql — business logic (RPC), tiers, leaderboard views
+--  0002_functions.sql — business logic (RPC), leaderboard views
 --  All mutations to points flow through these SECURITY DEFINER functions so the
 --  rules (one prediction, settlement scoring, deduct-on-redeem) are enforced in
 --  the database, not the client.
 -- ════════════════════════════════════════════════════════════════════════════
-
--- ─── Tier derivation ────────────────────────────────────────────────────────
-create or replace function tier_for_points(p int)
-returns user_tier language sql immutable as $$
-  select case
-    when p >= 3000 then 'fifa_legend'::user_tier
-    when p >= 1500 then 'golden_boot'::user_tier
-    when p >= 500  then 'sweet_striker'::user_tier
-    else 'mithai_fan'::user_tier
-  end;
-$$;
-
-create or replace function sync_tier()
-returns trigger language plpgsql as $$
-begin
-  new.tier := tier_for_points(new.points);
-  return new;
-end;
-$$;
-create trigger trg_profiles_tier before insert or update of points on profiles
-  for each row execute function sync_tier();
 
 -- ─── Make a prediction (one per user per match, free) ───────────────────────
 create or replace function fn_predict(p_match_id uuid, p_pick prediction_pick)
@@ -144,7 +123,7 @@ $$;
 -- ─── Views ──────────────────────────────────────────────────────────────────
 create or replace view v_leaderboard as
   select row_number() over (order by points desc, created_at) as rank,
-         id as user_id, name, points, tier
+         id as user_id, name, points
   from profiles;
 
 create or replace view v_match_breakdown as

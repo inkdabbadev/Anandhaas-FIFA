@@ -1,10 +1,8 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/app-store'
 import { initials, formatNumber } from '@/lib/utils'
-import { tierForPoints } from '@/constants'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { ChevronRight, LogOut, Bell, Globe, Shield } from 'lucide-react'
@@ -17,7 +15,6 @@ export function ProfileView() {
 
   if (!user) return <ProfileSkeleton />
 
-  const tier = tierForPoints(user.points)
   const accuracy = user.predictionsCount ? Math.round((user.correctCount / user.predictionsCount) * 100) : 0
 
   return (
@@ -38,18 +35,7 @@ export function ProfileView() {
           <Stat value={`${accuracy}%`} label="Accuracy" />
         </div>
 
-        <Link
-          href="/tiers"
-          className="mx-4 mb-3 mt-3 flex items-center justify-between rounded-2xl border border-border bg-card p-4"
-        >
-          <div>
-            <div className="text-sm font-semibold text-dark">{tier.name}</div>
-            <div className="mt-0.5 text-[13px] text-muted">{formatNumber(user.points)} season points</div>
-          </div>
-          <ChevronRight className="h-5 w-5 text-muted" />
-        </Link>
-
-        <div className="mx-4 mb-3 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="mx-4 mb-3 mt-3 overflow-hidden rounded-2xl border border-border bg-card">
           <SettingRow icon={Bell} label="Notifications" onClick={() => pushToast('Notification settings coming soon', 'info')} />
           <SettingRow icon={Globe} label="Language" value="English" onClick={() => pushToast('More languages coming soon', 'info')} />
           <SettingRow icon={Shield} label="Privacy & data" onClick={() => pushToast('Privacy centre coming soon', 'info')} last />

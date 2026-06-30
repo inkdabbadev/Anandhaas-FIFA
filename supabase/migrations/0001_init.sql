@@ -15,7 +15,6 @@ create extension if not exists citext;     -- case-insensitive text
 
 -- ─── Enums ──────────────────────────────────────────────────────────────────
 create type admin_role        as enum ('owner', 'manager', 'counter_staff', 'analyst');
-create type user_tier         as enum ('mithai_fan', 'sweet_striker', 'golden_boot', 'fifa_legend');
 create type match_status      as enum ('scheduled', 'open', 'locked', 'live', 'finished', 'cancelled');
 create type prediction_pick   as enum ('home', 'draw', 'away');
 create type prediction_status as enum ('pending', 'won', 'lost', 'void');
@@ -63,7 +62,6 @@ create table profiles (
   name       text not null check (length(btrim(name)) between 1 and 80),
   age        int  not null check (age between 12 and 120),
   points     int  not null default 0 check (points >= 0),
-  tier       user_tier not null default 'mithai_fan',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

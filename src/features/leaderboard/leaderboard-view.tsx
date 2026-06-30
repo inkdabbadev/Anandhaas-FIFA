@@ -7,7 +7,6 @@ import { EmptyState, ErrorState } from '@/components/ui/empty-state'
 import { getLeaderboard } from '@/services/data-service'
 import { useAppStore } from '@/store/app-store'
 import { initials, cn } from '@/lib/utils'
-import { tierForPoints } from '@/constants'
 import { Search } from 'lucide-react'
 import type { LeaderboardEntry } from '@/types'
 
@@ -31,7 +30,6 @@ export function LeaderboardView() {
             user_id: me.phone,
             name: me.name,
             avatar_url: null,
-            tier: tierForPoints(me.points).key,
             points: me.points,
             correct_predictions: me.correctCount,
             exact_scores: 0,

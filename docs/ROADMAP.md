@@ -2,7 +2,7 @@
 
 ## Phase 1 - Customer UI on Seeded Data
 
-- Mobile app: Home, Leaderboard, Rewards, Tiers, Profile, Prediction Sheet.
+- Mobile app: Home, Leaderboard, Rewards, Profile, Prediction Sheet.
 - Landing and phone + email OTP-style mock login flow.
 - Loading states, empty states, toasts, and polished interaction states.
 - PWA shell with manifest, service worker, and offline page.

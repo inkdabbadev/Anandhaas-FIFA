@@ -20,7 +20,6 @@ export const MOCK_USER: User = {
   phone: '+91 98765 43210',
   name: 'Rajesh Kumar',
   avatar_url: null,
-  tier: 'sweet_striker',
   season_points: 480,
   token_balance: 243,
   referral_code: 'RAJESH26',
@@ -126,16 +125,16 @@ export const MOCK_REWARDS: Reward[] = [
   { id: 'rwd_2', campaign_id: CAMPAIGN_ID, title: 'Free Ghee Mysore Pak 200g', description: 'Claim instore · show QR code at counter', icon: '🍬', points_cost: 200, inventory: 50, is_active: true, expires_at: null, created_at: h(-72) },
   { id: 'rwd_3', campaign_id: CAMPAIGN_ID, title: 'FIFA Mithai Box', description: 'Limited edition FIFA-themed assortment box', icon: '🪄', points_cost: 350, inventory: 25, is_active: true, expires_at: null, created_at: h(-72) },
   { id: 'rwd_4', campaign_id: CAMPAIGN_ID, title: 'Premium gift box', description: '₹499 value · ribbon packaging included', icon: '🎁', points_cost: 400, inventory: 15, is_active: true, expires_at: null, created_at: h(-72) },
-  { id: 'rwd_5', campaign_id: CAMPAIGN_ID, title: 'VIP Leaderboard badge', description: 'Gold badge for top-tier season finishers', icon: '🏆', points_cost: 500, inventory: null, is_active: true, expires_at: null, created_at: h(-72) },
+  { id: 'rwd_5', campaign_id: CAMPAIGN_ID, title: 'VIP Leaderboard badge', description: 'Gold badge for top season finishers', icon: '🏆', points_cost: 500, inventory: null, is_active: true, expires_at: null, created_at: h(-72) },
 ]
 
 export const MOCK_LEADERBOARD: LeaderboardEntry[] = [
-  { rank: 1, user_id: 'u1', name: 'Priya Sundaram', avatar_url: null, tier: 'golden_boot', points: 720, correct_predictions: 9, exact_scores: 3 },
-  { rank: 2, user_id: 'u2', name: 'Vikram Rajan', avatar_url: null, tier: 'golden_boot', points: 650, correct_predictions: 8, exact_scores: 2 },
-  { rank: 3, user_id: 'u3', name: 'Meena Iyer', avatar_url: null, tier: 'sweet_striker', points: 580, correct_predictions: 7, exact_scores: 1 },
-  { rank: 4, user_id: 'usr_rajesh', name: 'Rajesh Kumar', avatar_url: null, tier: 'sweet_striker', points: 480, correct_predictions: 6, exact_scores: 0, is_me: true },
-  { rank: 5, user_id: 'u5', name: 'Suresh Nair', avatar_url: null, tier: 'sweet_striker', points: 430, correct_predictions: 5, exact_scores: 1 },
-  { rank: 6, user_id: 'u6', name: 'Deepika Sharma', avatar_url: null, tier: 'mithai_fan', points: 380, correct_predictions: 5, exact_scores: 0 },
+  { rank: 1, user_id: 'u1', name: 'Priya Sundaram', avatar_url: null, points: 720, correct_predictions: 9, exact_scores: 3 },
+  { rank: 2, user_id: 'u2', name: 'Vikram Rajan', avatar_url: null, points: 650, correct_predictions: 8, exact_scores: 2 },
+  { rank: 3, user_id: 'u3', name: 'Meena Iyer', avatar_url: null, points: 580, correct_predictions: 7, exact_scores: 1 },
+  { rank: 4, user_id: 'usr_rajesh', name: 'Rajesh Kumar', avatar_url: null, points: 480, correct_predictions: 6, exact_scores: 0, is_me: true },
+  { rank: 5, user_id: 'u5', name: 'Suresh Nair', avatar_url: null, points: 430, correct_predictions: 5, exact_scores: 1 },
+  { rank: 6, user_id: 'u6', name: 'Deepika Sharma', avatar_url: null, points: 380, correct_predictions: 5, exact_scores: 0 },
 ]
 
 export const MOCK_TOKEN_LEDGER: TokenLedger[] = [

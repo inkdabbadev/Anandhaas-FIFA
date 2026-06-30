@@ -3,14 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutGroup, motion } from 'framer-motion'
-import { Home, Trophy, Gift, Star, CircleUser, type LucideIcon } from 'lucide-react'
+import { Home, Trophy, Gift, CircleUser, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/home', label: 'Home', icon: Home },
   { href: '/leaderboard', label: 'Rankings', icon: Trophy },
   { href: '/rewards', label: 'Rewards', icon: Gift },
-  { href: '/tiers', label: 'Tiers', icon: Star },
   { href: '/profile', label: 'Profile', icon: CircleUser },
 ]
 

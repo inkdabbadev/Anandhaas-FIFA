@@ -33,7 +33,6 @@ Theme tokens live in `src/app/globals.css` and flow into Tailwind through `@them
 | `predictions/` | Interactive prediction sheet. |
 | `leaderboard/` | Leaderboard UI. |
 | `rewards/` | Offers and claimed rewards. |
-| `tiers/` | Tier progress. |
 | `profile/` | Customer profile and sign-out. |
 
 The admin console is maintained as a separate application and is not part of this customer app component tree.

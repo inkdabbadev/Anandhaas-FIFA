@@ -24,7 +24,7 @@ create policy campaigns_write  on campaigns for all
 -- ─── Profiles: owner manages own; admin reads all ──────────────────────────
 create policy profiles_self_read   on profiles for select using (id = auth.uid() or is_admin());
 create policy profiles_self_insert on profiles for insert
-  with check (id = auth.uid() and points = 0 and tier = 'mithai_fan');
+  with check (id = auth.uid() and points = 0);
 create policy profiles_self_update on profiles for update
   using (id = auth.uid())
   with check (id = auth.uid());
