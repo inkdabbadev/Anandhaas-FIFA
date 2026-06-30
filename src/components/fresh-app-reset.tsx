@@ -12,7 +12,7 @@ export function FreshAppReset() {
   const pathname = usePathname()
 
   useEffect(() => {
-    clearBrowserStorage()
+    clearLocalStorage()
     clearBrowserCaches()
     unregisterServiceWorkers()
   }, [])
@@ -26,10 +26,9 @@ export function FreshAppReset() {
   return null
 }
 
-function clearBrowserStorage() {
+function clearLocalStorage() {
   try {
     window.localStorage.clear()
-    window.sessionStorage.clear()
   } catch {}
 }
 

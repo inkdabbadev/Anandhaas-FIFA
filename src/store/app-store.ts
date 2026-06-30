@@ -13,7 +13,7 @@ export type Pick = 'home' | 'draw' | 'away'
  *  A correct prediction (win OR draw) earns CORRECT points; a wrong one earns 0.
  *  Points are only assigned once the match is settled with a final result. */
 export const POINTS = {
-  CORRECT: 2,
+  CORRECT: 50,
 }
 
 export interface StoredUser {
@@ -53,6 +53,8 @@ export interface ToastData {
   message: string
   type: 'success' | 'error' | 'info'
 }
+
+const SESSION_USER_KEY = 'fifa-app:session-user'
 
 /** Admin input for creating/editing a match. */
 export interface MatchInput {
@@ -108,6 +110,7 @@ interface AppState {
   activeSheetMatchId: string | null
   draftPick: Pick | null
   toasts: ToastData[]
+  sessionChecked: boolean
 
   // ── seeding ──
   ensureSeeded: () => void
@@ -121,6 +124,8 @@ interface AppState {
   register: (input: { phone: string; email: string; name: string; age: number }) => void
   login: (input: { phone: string; email: string }) => void
   setAuthenticatedUser: (user: StoredUser) => void
+  updateCurrentUserStats: (stats: { points: number; predictionsCount: number; correctCount: number }) => void
+  restoreSessionUser: () => boolean
   logout: () => void
 
   // ── predictions ──
@@ -177,6 +182,7 @@ export const useAppStore = create<AppState>()(
       activeSheetMatchId: null,
       draftPick: null,
       toasts: [],
+      sessionChecked: false,
 
       ensureSeeded: () => {
         if (get().seeded && get().matches.length > 0) return
@@ -196,6 +202,7 @@ export const useAppStore = create<AppState>()(
           activeSheetMatchId: null,
           draftPick: null,
           toasts: [],
+          sessionChecked: false,
         })
       },
 
@@ -256,14 +263,51 @@ export const useAppStore = create<AppState>()(
       setAuthenticatedUser: (user) => {
         const key = normalize(user.phone)
         const cleanUser = { ...user, phone: key, email: normalizeEmail(user.email) }
+        saveSessionUser(cleanUser)
         set((s) => ({
           users: { ...s.users, [key]: cleanUser },
           currentPhone: key,
           predictions: s.allPredictions[key] ?? {},
+          sessionChecked: true,
         }))
       },
 
-      logout: () => set({ currentPhone: null, predictions: {} }),
+      updateCurrentUserStats: (stats) => {
+        const key = get().currentPhone
+        if (!key) return
+
+        set((s) => {
+          const user = s.users[key]
+          if (!user) return s
+
+          const updatedUser = { ...user, ...stats }
+          saveSessionUser(updatedUser)
+          return { users: { ...s.users, [key]: updatedUser } }
+        })
+      },
+
+      restoreSessionUser: () => {
+        const user = readSessionUser()
+        if (!user) {
+          set({ sessionChecked: true })
+          return false
+        }
+
+        const key = normalize(user.phone)
+        const cleanUser = { ...user, phone: key, email: normalizeEmail(user.email) }
+        set((s) => ({
+          users: { ...s.users, [key]: cleanUser },
+          currentPhone: key,
+          predictions: s.allPredictions[key] ?? {},
+          sessionChecked: true,
+        }))
+        return true
+      },
+
+      logout: () => {
+        clearSessionUser()
+        set({ currentPhone: null, predictions: {}, sessionChecked: true })
+      },
 
       predict: (match, pick) => {
         const key = get().currentPhone
@@ -294,6 +338,7 @@ export const useAppStore = create<AppState>()(
               }
             : user
           const userPreds = { ...(s.allPredictions[key] ?? {}), [match.id]: record }
+          if (updatedUser) saveSessionUser(updatedUser)
           return {
             users: user ? { ...s.users, [key]: updatedUser } : s.users,
             allPredictions: { ...s.allPredictions, [key]: userPreds },
@@ -338,6 +383,7 @@ export const useAppStore = create<AppState>()(
               }
             : user
           const userPreds = { ...(s.allPredictions[key] ?? {}), [match.id]: record }
+          if (updatedUser) saveSessionUser(updatedUser)
           return {
             users: updatedUser ? { ...s.users, [key]: updatedUser } : s.users,
             allPredictions: { ...s.allPredictions, [key]: userPreds },
@@ -424,6 +470,7 @@ export const useAppStore = create<AppState>()(
           }
 
           const key = s.currentPhone
+          if (key && users[key]) saveSessionUser(users[key])
           return {
             users,
             allPredictions,
@@ -493,7 +540,14 @@ export const useAppStore = create<AppState>()(
           status: 'pending',
           createdAt: new Date().toISOString(),
         }
-        set((s) => ({ claims: [claim, ...s.claims] }))
+        set((s) => {
+          const updatedUser = { ...user, points: Math.max(0, user.points - offer.points_cost) }
+          saveSessionUser(updatedUser)
+          return {
+            users: { ...s.users, [key]: updatedUser },
+            claims: [claim, ...s.claims],
+          }
+        })
         return true
       },
 
@@ -514,8 +568,7 @@ export const useAppStore = create<AppState>()(
           if (!claim || claim.status === 'redeemed') return s
           const user = s.users[claim.phone]
           const updatedUser = user
-            ? { ...user, points: Math.max(0, user.points - claim.pointsCost) }
-            : user
+          if (updatedUser && s.currentPhone === claim.phone) saveSessionUser(updatedUser)
           return {
             users: user ? { ...s.users, [claim.phone]: updatedUser } : s.users,
             claims: s.claims.map((c) =>
@@ -548,4 +601,47 @@ function normalize(phone: string): string {
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
+}
+
+function saveSessionUser(user: StoredUser) {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(user))
+  } catch {}
+}
+
+function readSessionUser(): StoredUser | null {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const raw = window.sessionStorage.getItem(SESSION_USER_KEY)
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw) as Partial<StoredUser>
+    if (!parsed.phone || !parsed.email || !parsed.name) return null
+
+    return {
+      id: typeof parsed.id === 'string' ? parsed.id : undefined,
+      phone: parsed.phone,
+      email: parsed.email,
+      name: parsed.name,
+      age: Number(parsed.age ?? 0),
+      points: Number(parsed.points ?? 0),
+      predictionsCount: Number(parsed.predictionsCount ?? 0),
+      correctCount: Number(parsed.correctCount ?? 0),
+      createdAt: typeof parsed.createdAt === 'string' ? parsed.createdAt : new Date().toISOString(),
+    }
+  } catch {
+    clearSessionUser()
+    return null
+  }
+}
+
+function clearSessionUser() {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.sessionStorage.removeItem(SESSION_USER_KEY)
+  } catch {}
 }

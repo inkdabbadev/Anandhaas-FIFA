@@ -150,12 +150,12 @@ function LeaderboardRow({ entry, index }: { entry: LeaderboardEntry; index: numb
           {entry.name}
           {entry.is_me && <span className="ml-1.5 text-xs font-medium text-gold">You</span>}
         </div>
-        <div className="mt-0.5 text-xs text-muted">
+        <div className="mt-0.5 truncate text-xs text-muted">
           {entry.correct_predictions} correct · {entry.exact_scores} exact
         </div>
       </div>
-      <div className="text-right">
-        <div className="tnum font-serif text-lg font-bold text-gold">{entry.points}</div>
+      <div className="min-w-[54px] shrink-0 text-right">
+        <div className="tnum truncate font-serif text-lg font-bold text-gold">{entry.points}</div>
         <div className="text-[11px] text-muted">pts</div>
       </div>
     </div>

@@ -12,6 +12,7 @@ export function MatchList() {
   const matches = useAppStore((s) => s.matches)
   const user = useAppStore((s) => (s.currentPhone ? s.users[s.currentPhone] : null))
   const hydrateMatchFeed = useAppStore((s) => s.hydrateMatchFeed)
+  const updateCurrentUserStats = useAppStore((s) => s.updateCurrentUserStats)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -29,6 +30,7 @@ export function MatchList() {
         setError('')
       }
       hydrateMatchFeed(result.matches, result.predictions)
+      if (result.userStats) updateCurrentUserStats(result.userStats)
       setLoading(false)
     }
 
@@ -37,7 +39,7 @@ export function MatchList() {
     return () => {
       cancelled = true
     }
-  }, [hydrateMatchFeed, user?.id])
+  }, [hydrateMatchFeed, updateCurrentUserStats, user?.id])
 
   const visible = matches.filter((m) => m.status === 'live' || m.status === 'upcoming')
 

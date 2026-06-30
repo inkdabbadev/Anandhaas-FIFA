@@ -32,7 +32,7 @@ export function ProfileView() {
       </section>
 
       <div className="relative z-10 -mt-5 rounded-t-[28px] bg-bg pt-3 shadow-[0_-12px_30px_rgba(8,26,22,0.14)]">
-        <div className="grid grid-cols-3 gap-3 px-4 pb-1 pt-2">
+        <div className="grid grid-cols-3 gap-2 px-4 pb-1 pt-2">
           <Stat value={formatNumber(user.points)} label="Points" />
           <Stat value={user.predictionsCount} label="Predictions" />
           <Stat value={`${accuracy}%`} label="Accuracy" />
@@ -74,9 +74,11 @@ export function ProfileView() {
 
 function Stat({ value, label }: { value: string | number; label: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-card px-2 py-4 text-center">
-      <div className="tnum font-serif text-[26px] font-bold text-dark">{value}</div>
-      <div className="mt-1 text-[13px] text-muted">{label}</div>
+    <div className="min-w-0 rounded-2xl border border-border bg-card px-1.5 py-4 text-center">
+      <div className="tnum truncate font-serif text-[clamp(18px,7vw,26px)] font-bold leading-none text-dark">
+        {value}
+      </div>
+      <div className="mt-1 text-[12px] leading-tight text-muted">{label}</div>
     </div>
   )
 }

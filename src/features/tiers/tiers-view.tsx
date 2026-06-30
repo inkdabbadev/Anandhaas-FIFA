@@ -16,11 +16,11 @@ export function TiersView() {
     <div className="px-4 pt-3">
       {next && (
         <div className="mb-3 rounded-2xl border border-gold-border bg-gold-bg p-4">
-          <div className="flex items-center justify-between text-[13px]">
-            <span className="font-semibold text-mid">
+          <div className="flex items-start justify-between gap-3 text-[13px]">
+            <span className="min-w-0 font-semibold leading-snug text-mid">
               {toNext} pts to <strong className="text-gold">{next.name}</strong>
             </span>
-            <span className="tnum text-muted">
+            <span className="tnum shrink-0 text-right text-muted">
               {points} / {next.minPoints}
             </span>
           </div>
@@ -50,9 +50,9 @@ export function TiersView() {
               >
                 {t.num}
               </span>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[15px] font-bold text-dark">{t.name}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="min-w-0 text-[15px] font-bold leading-tight text-dark">{t.name}</span>
                   {active && <Badge variant="gold" size="md">You’re here</Badge>}
                 </div>
                 <div className="mt-0.5 text-xs text-muted">{t.range}</div>

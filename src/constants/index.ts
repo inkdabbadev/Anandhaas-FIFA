@@ -8,7 +8,7 @@ export const APP = {
 } as const
 
 export const POINTS = {
-  CORRECT: 2,
+  CORRECT: 50,
 } as const
 
 export const STREAK_TARGET = 7

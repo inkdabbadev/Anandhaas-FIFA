@@ -32,8 +32,8 @@ export function RewardsView() {
         <SectionHeader title="How it works" />
         <div className="mx-4 overflow-hidden rounded-2xl border border-border bg-card">
           <HowRow icon="⚽" label="Predict any match" amount="Free" />
-          <HowRow icon="🎯" label="Correct prediction" amount="+2 pts" />
-          <HowRow icon="🏬" label="Redeem at any Anandhaas store" amount="Show phone" last />
+          <HowRow icon="🎯" label="Correct prediction" amount="+50 pts" />
+          <HowRow icon="🏬" label="Redeem at any Anandhaas store" amount="Spend points" last />
         </div>
 
         <div className="px-4 pt-5">
@@ -59,8 +59,8 @@ function HowRow({ icon, label, amount, last }: { icon: string; label: string; am
   return (
     <div className={cn('flex items-center gap-3 px-4 py-3.5', !last && 'border-b border-border')}>
       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold-bg text-lg">{icon}</span>
-      <span className="flex-1 text-sm font-medium text-dark">{label}</span>
-      <span className="text-sm font-semibold text-gold">{amount}</span>
+      <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-dark">{label}</span>
+      <span className="shrink-0 text-right text-sm font-semibold leading-snug text-gold">{amount}</span>
     </div>
   )
 }
@@ -112,7 +112,13 @@ function OffersTab({ points }: { points: number }) {
                   )}
                 </div>
               </div>
-              <Button size="sm" variant={can ? 'primary' : 'outline'} disabled={soldOut} onClick={() => onClaim(o)}>
+              <Button
+                size="sm"
+                variant={can ? 'primary' : 'outline'}
+                disabled={soldOut}
+                onClick={() => onClaim(o)}
+                className="shrink-0 px-3"
+              >
                 {soldOut ? 'Sold out' : can ? 'Claim' : 'Locked'}
               </Button>
             </div>
@@ -138,9 +144,7 @@ function ClaimModal({ offer, onClose }: { offer: Reward | null; onClose: () => v
           <div className="mt-4 flex items-start gap-3 rounded-2xl bg-bg p-4 text-left">
             <Store className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
             <p className="text-sm leading-relaxed text-mid">
-              To claim your reward, visit your nearest <strong className="text-dark">Anandhaas</strong>{' '}
-              store and share your phone number. Our staff will verify you with an OTP and apply the
-              reward — your points are deducted only when they redeem it.
+              Your points have been used for this reward. Visit your nearest <strong className="text-dark">Anandhaas</strong> store and share your phone number so our staff can verify and apply it.
             </p>
           </div>
           <p className="mt-3 text-xs text-muted">Find it under “My rewards” anytime.</p>
@@ -179,11 +183,11 @@ function MyRewardsTab() {
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-sm font-semibold text-dark">{c.offerTitle}</div>
-            <div className="mt-0.5 text-xs text-muted">
+            <div className="mt-0.5 text-xs leading-snug text-muted">
               {c.status === 'pending' ? 'Show your phone number in store' : 'Redeemed'} · {c.pointsCost} pts
             </div>
           </div>
-          <Badge variant={c.status === 'pending' ? 'gold' : 'green'} size="md">
+          <Badge variant={c.status === 'pending' ? 'gold' : 'green'} size="md" className="shrink-0">
             {c.status === 'pending' ? 'Ready' : 'Redeemed'}
           </Badge>
         </div>

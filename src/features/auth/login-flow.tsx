@@ -155,8 +155,8 @@ export function LoginFlow() {
   }
 
   return (
-    <div className="flex min-h-svh justify-center bg-brand">
-      <div className="flex min-h-svh w-full max-w-[430px] flex-col px-7 pb-10 pt-14">
+    <div className="flex min-h-svh justify-center overflow-y-auto bg-brand">
+      <div className="flex min-h-svh w-full max-w-[430px] flex-col px-5 pb-10 pt-10 sm:px-7 sm:pt-14">
         <Header
           showBack={step !== 'choice'}
           onBack={() => {

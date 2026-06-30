@@ -163,7 +163,7 @@ export function PredictionSheet() {
               >
                 <motion.div
                   className={cn(
-                    'absolute grid h-20 w-20 place-items-center rounded-full text-4xl shadow-[0_18px_35px_rgba(0,0,0,0.26)]',
+                    'absolute grid h-16 w-24 place-items-center overflow-hidden rounded-xl text-4xl shadow-[0_18px_35px_rgba(0,0,0,0.26)]',
                     currentCelebration.pick === 'draw' ? 'bg-white text-dark' : 'bg-gold text-white'
                   )}
                   initial={reduceMotion ? false : { y: 54, scale: 0.58, rotate: -12 }}
@@ -331,11 +331,10 @@ function PredictionPuck({
     >
       <span
         className={cn(
-          'relative grid h-[74px] w-[74px] place-items-center rounded-full border-[5px] text-[32px] shadow-[0_12px_26px_rgba(8,26,22,0.16)] transition-colors',
+          'relative grid h-[58px] w-[82px] place-items-center overflow-hidden rounded-xl border-[3px] text-[24px] shadow-[0_12px_26px_rgba(8,26,22,0.16)] transition-colors',
           selected ? 'border-gold-light bg-gold text-white' : 'border-white bg-dark text-white'
         )}
       >
-        <span className="absolute inset-2 rounded-full border border-white/10" />
         <FlagContent
           key={`${option.flag}-${option.fallback ?? ''}`}
           flag={option.flag}
@@ -356,15 +355,17 @@ function FlagContent({ flag, fallback, name }: { flag: string; fallback?: string
 
   if (isImageFlag(src)) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={src}
-        alt={`${name} flag`}
-        className="h-full w-full object-contain p-1"
-        onError={() => {
-          if (fallback && src !== fallback) setFailedPrimary(true)
-        }}
-      />
+      <span className="absolute inset-0 grid place-items-center overflow-hidden bg-white">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={`${name} flag`}
+          className="h-full w-full object-contain"
+          onError={() => {
+            if (fallback && src !== fallback) setFailedPrimary(true)
+          }}
+        />
+      </span>
     )
   }
 

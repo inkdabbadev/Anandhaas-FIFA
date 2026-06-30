@@ -91,7 +91,7 @@ export function MatchCard({ match, liveMinute }: { match: Match; liveMinute?: nu
           </div>
         ) : open ? (
           <Button size="md" block onClick={handleOpen}>
-            Predict - it is free
+            Predict
           </Button>
         ) : (
           <div className="flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-bg px-3 py-3 text-sm font-semibold text-muted">

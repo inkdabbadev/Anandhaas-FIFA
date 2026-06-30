@@ -102,7 +102,8 @@ body {
   font-feature-settings: "ss01", "cv01", "cv11";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  letter-spacing: -0.011em;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 /* ─── Typography ──────────────────────────────────────────────────────────────
@@ -110,10 +111,10 @@ body {
    — same typeface, just tighter tracking for large headings. */
 .font-serif {
   font-family: var(--font-serif);
-  letter-spacing: -0.028em;
+  letter-spacing: 0;
 }
 h1, h2, h3 {
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 input.auth-dark-input,

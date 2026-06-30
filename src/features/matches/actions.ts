@@ -47,6 +47,7 @@ export type MatchFeedResult = {
   ok: boolean
   message: string
   matches: Match[]
+  userStats?: UserStats
   predictions: Record<
     string,
     {
@@ -84,9 +85,11 @@ export async function loadMatchFeed(userId?: string): Promise<MatchFeedResult> {
     }
 
     const matches = ((data ?? []) as MatchRow[]).map(toUiMatch).filter(Boolean) as Match[]
-    const predictions = userId ? await loadUserPredictions(userId, matches) : {}
+    const [predictions, userStats] = userId
+      ? await Promise.all([loadUserPredictions(userId, matches), loadUserStats(userId)])
+      : [{}, undefined]
 
-    return { ok: true, message: 'Matches loaded.', matches, predictions }
+    return { ok: true, message: 'Matches loaded.', matches, predictions, userStats }
   } catch (error) {
     return emptyFeed(error instanceof Error ? error.message : 'Could not load matches.')
   }
@@ -182,6 +185,23 @@ async function loadUserPredictions(userId: string, matches: MatchFeedResult['mat
     }
     return acc
   }, {})
+}
+
+async function loadUserStats(userId: string): Promise<UserStats | undefined> {
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('user_profiles')
+    .select('points_balance,predictions_count,correct_predictions_count')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (error || !data) return undefined
+
+  return {
+    points: data.points_balance ?? 0,
+    predictionsCount: data.predictions_count ?? 0,
+    correctCount: data.correct_predictions_count ?? 0,
+  }
 }
 
 async function incrementPredictionCount(userId: string): Promise<UserStats | undefined> {

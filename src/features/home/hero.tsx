@@ -40,7 +40,7 @@ export function Hero() {
       </motion.h1>
 
       <motion.div
-        className="mt-6 grid grid-cols-3 gap-2.5"
+        className="mt-6 grid grid-cols-3 gap-2"
         initial={reduceMotion ? false : 'hidden'}
         animate={reduceMotion ? undefined : 'show'}
         variants={{
@@ -59,14 +59,14 @@ export function Hero() {
 function Stat({ value, label }: { value: string | number; label: string }) {
   return (
     <motion.div
-      className="rounded-2xl border border-white/10 bg-white/[0.08] px-2.5 py-3.5 text-center shadow-[0_12px_30px_rgba(0,0,0,0.10)] backdrop-blur-sm will-change-transform"
+      className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.08] px-1.5 py-3.5 text-center shadow-[0_12px_30px_rgba(0,0,0,0.10)] backdrop-blur-sm will-change-transform"
       variants={{
         hidden: { y: 12, opacity: 0 },
         show: { y: 0, opacity: 1, transition: { duration: 0.28, ease: 'easeOut' } },
       }}
     >
-      <span className="tnum block text-xl font-extrabold leading-none text-bg">{value}</span>
-      <span className="mt-1.5 block text-[11px] font-medium text-[var(--on-dark-dim)]">{label}</span>
+      <span className="tnum block truncate text-[clamp(16px,5.8vw,20px)] font-extrabold leading-none text-bg">{value}</span>
+      <span className="mt-1.5 block text-[11px] font-medium leading-tight text-[var(--on-dark-dim)]">{label}</span>
     </motion.div>
   )
 }

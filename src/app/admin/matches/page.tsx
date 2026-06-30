@@ -5,6 +5,7 @@ import { CalendarDays, Flag, ListChecks } from 'lucide-react'
 import { Card, CardBody } from '@/components/ui/card'
 import { createAdminClient } from '@/lib/supabase/server'
 import { MatchForm, type MatchTeamOption } from './match-form'
+import { ResultForm } from './result-form'
 
 export const metadata: Metadata = {
   title: 'Admin Matches',
@@ -24,6 +25,11 @@ type MatchRow = {
   starts_at: string
   prediction_closes_at: string
   status: string
+  team1_score: number | null
+  team2_score: number | null
+  winning_pick: string | null
+  result_published: boolean
+  points_processed: boolean
   is_active: boolean
   is_featured: boolean
   team1: TeamRow | null
@@ -165,6 +171,15 @@ function MatchListItem({ match }: { match: MatchRow }) {
           </p>
         )}
       </div>
+
+      <ResultForm
+        matchId={match.id}
+        team1Name={match.team1?.name ?? 'Team 1'}
+        team2Name={match.team2?.name ?? 'Team 2'}
+        team1Score={match.team1_score}
+        team2Score={match.team2_score}
+        processed={match.points_processed}
+      />
     </div>
   )
 }
@@ -228,7 +243,7 @@ async function getMatches(): Promise<{ matches: MatchRow[]; error: string | null
     const { data, error } = await admin
       .from('matches')
       .select(
-        'id,stage,group_name,starts_at,prediction_closes_at,status,is_active,is_featured,team1:teams!matches_team1_id_fkey(id,name,code,flag_url),team2:teams!matches_team2_id_fkey(id,name,code,flag_url)'
+        'id,stage,group_name,starts_at,prediction_closes_at,status,team1_score,team2_score,winning_pick,result_published,points_processed,is_active,is_featured,team1:teams!matches_team1_id_fkey(id,name,code,flag_url),team2:teams!matches_team2_id_fkey(id,name,code,flag_url)'
       )
       .order('starts_at', { ascending: true })
 

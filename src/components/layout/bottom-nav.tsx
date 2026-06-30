@@ -28,7 +28,7 @@ export function BottomNav() {
                 key={href}
                 href={href}
                 aria-current={active ? 'page' : undefined}
-                className="group relative flex min-h-[58px] flex-1 flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl"
+                className="group relative flex min-h-[58px] min-w-0 flex-1 flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl px-0.5"
               >
                 {active && (
                   <motion.span
@@ -46,7 +46,7 @@ export function BottomNav() {
                 />
                 <span
                   className={cn(
-                    'relative z-10 text-[10px] leading-none transition-colors duration-200',
+                    'relative z-10 max-w-full truncate text-[10px] leading-none transition-colors duration-200',
                     active ? 'font-semibold text-gold' : 'font-medium text-muted'
                   )}
                 >
