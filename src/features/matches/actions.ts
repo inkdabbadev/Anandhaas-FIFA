@@ -106,7 +106,9 @@ export async function savePrediction(input: {
   const dbPick = toDbPick(input.pick)
 
   if (!userId) return { ok: false, message: 'Please login again before predicting.' }
-  if (!matchId || !dbPick) return { ok: false, message: 'Choose a valid prediction.' }
+  if (!matchId || !dbPick || dbPick === 'draw') {
+    return { ok: false, message: 'Choose one of the teams to win.' }
+  }
 
   try {
     const admin = createAdminClient()

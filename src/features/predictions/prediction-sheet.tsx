@@ -62,7 +62,6 @@ export function PredictionSheet() {
         fallback: match.home_team.flagFallback,
         name: match.home_team.name,
       },
-      { key: 'draw' as const, flag: 'DRAW', fallback: null, name: 'Draw' },
       {
         key: 'away' as const,
         flag: match.away_team.flag,
@@ -235,7 +234,7 @@ export function PredictionSheet() {
 
       <p className="mb-4 text-center text-sm font-medium text-mid">{instruction}</p>
 
-      <div className="mb-5 grid grid-cols-3 gap-2.5">
+      <div className="mb-5 grid grid-cols-2 gap-2.5">
         {options.map((option) => {
           const selected = draftPick === option.key
           return (
