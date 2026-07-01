@@ -110,8 +110,8 @@ export async function createTeamAction(
     }
   }
 
-  revalidatePath('/admin/team')
-  revalidatePath('/admin/matches')
+  revalidatePath('/dev/team')
+  revalidatePath('/dev/matches')
 
   return {
     status: 'success',

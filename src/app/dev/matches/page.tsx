@@ -9,7 +9,7 @@ import { ResultForm } from './result-form'
 import { CancelMatchForm } from './cancel-match-form'
 
 export const metadata: Metadata = {
-  title: 'Admin Matches',
+  title: 'Dev Matches',
 }
 
 export const runtime = 'nodejs'
@@ -65,8 +65,8 @@ export default async function AdminMatchesPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <AdminLink href="/admin/team" icon={Flag} label="Teams" />
-              <AdminLink href="/admin/matches" active icon={CalendarDays} label="Matches" />
+              <AdminLink href="/dev/team" icon={Flag} label="Teams" />
+              <AdminLink href="/dev/matches" active icon={CalendarDays} label="Matches" />
             </div>
           </div>
         </header>

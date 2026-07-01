@@ -78,7 +78,7 @@ export async function createMatchAction(
     return { status: 'error', message: error.message }
   }
 
-  revalidatePath('/admin/matches')
+  revalidatePath('/dev/matches')
 
   return { status: 'success', message: 'Match was added.' }
 }
@@ -209,7 +209,7 @@ export async function publishMatchResultAction(
 
   if (updateMatchError) return { status: 'error', message: updateMatchError.message }
 
-  revalidatePath('/admin/matches')
+  revalidatePath('/dev/matches')
   revalidatePath('/home')
   revalidatePath('/leaderboard')
   revalidatePath('/profile')
@@ -258,7 +258,7 @@ export async function cancelMatchAction(
 
   if (updateError) return { status: 'error', message: updateError.message }
 
-  revalidatePath('/admin/matches')
+  revalidatePath('/dev/matches')
   revalidatePath('/home')
 
   return { status: 'success', message: 'Match cancelled.' }

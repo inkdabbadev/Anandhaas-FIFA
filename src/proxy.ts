@@ -3,8 +3,12 @@ import { NextResponse } from 'next/server'
 import {
   ADMIN_AUTH_COOKIE,
   ADMIN_AUTH_VALUE,
+  DEV_AUTH_COOKIE,
+  DEV_AUTH_VALUE,
   isAdminLoginPath,
   isAdminPath,
+  isDevLoginPath,
+  isDevPath,
 } from '@/lib/admin-auth'
 import { updateSession } from '@/lib/supabase/middleware'
 
@@ -16,6 +20,16 @@ export async function proxy(request: NextRequest) {
     if (!authenticated) {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = '/admin/login'
+      loginUrl.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
+
+  if (isDevPath(pathname) && !isDevLoginPath(pathname)) {
+    const authenticated = request.cookies.get(DEV_AUTH_COOKIE)?.value === DEV_AUTH_VALUE
+    if (!authenticated) {
+      const loginUrl = request.nextUrl.clone()
+      loginUrl.pathname = '/dev/login'
       loginUrl.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
       return NextResponse.redirect(loginUrl)
     }

@@ -3,22 +3,22 @@
 import { LockKeyhole } from 'lucide-react'
 import { useActionState } from 'react'
 import { Button } from '@/components/ui/button'
-import { adminLoginAction, type AdminLoginState } from './actions'
+import { devLoginAction, type DevLoginState } from './actions'
 
-const initialState: AdminLoginState = {
+const initialState: DevLoginState = {
   status: 'idle',
   message: '',
 }
 
-export function AdminLoginForm({ nextPath }: { nextPath: string }) {
-  const [state, formAction, pending] = useActionState(adminLoginAction, initialState)
+export function DevLoginForm({ nextPath }: { nextPath: string }) {
+  const [state, formAction, pending] = useActionState(devLoginAction, initialState)
 
   return (
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="next" value={nextPath} />
 
       <label className="block space-y-2">
-        <span className="text-sm font-semibold text-bg">Dashboard password</span>
+        <span className="text-sm font-semibold text-bg">Developer password</span>
         <span className="flex min-h-12 items-center gap-3 rounded-2xl border border-dark-3 bg-dark-2 px-4 text-bg shadow-sm focus-within:border-gold-light focus-within:ring-2 focus-within:ring-gold-light/25">
           <LockKeyhole className="h-5 w-5 shrink-0 text-gold-light" aria-hidden="true" />
           <input
@@ -40,7 +40,7 @@ export function AdminLoginForm({ nextPath }: { nextPath: string }) {
       ) : null}
 
       <Button type="submit" size="lg" block disabled={pending}>
-        {pending ? 'Checking...' : 'Open dashboard'}
+        {pending ? 'Checking...' : 'Open developer tools'}
       </Button>
     </form>
   )

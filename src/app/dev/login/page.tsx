@@ -1,24 +1,24 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { ADMIN_AUTH_COOKIE, ADMIN_AUTH_VALUE, getSafeAdminNextPath } from '@/lib/admin-auth'
-import { AdminLoginForm } from './admin-login-form'
+import { DEV_AUTH_COOKIE, DEV_AUTH_VALUE, getSafeDevNextPath } from '@/lib/admin-auth'
+import { DevLoginForm } from './dev-login-form'
 
 export const metadata: Metadata = {
-  title: 'Admin Login',
+  title: 'Developer Login',
 }
 
-type AdminLoginPageProps = {
+type DevLoginPageProps = {
   searchParams?: Promise<{
     next?: string | string[]
   }>
 }
 
-export default async function AdminLoginPage({ searchParams }: AdminLoginPageProps) {
+export default async function DevLoginPage({ searchParams }: DevLoginPageProps) {
   const params = await searchParams
-  const nextPath = getSafeAdminNextPath(Array.isArray(params?.next) ? params.next[0] : params?.next)
+  const nextPath = getSafeDevNextPath(Array.isArray(params?.next) ? params.next[0] : params?.next)
   const cookieStore = await cookies()
-  const authenticated = cookieStore.get(ADMIN_AUTH_COOKIE)?.value === ADMIN_AUTH_VALUE
+  const authenticated = cookieStore.get(DEV_AUTH_COOKIE)?.value === DEV_AUTH_VALUE
 
   if (authenticated) {
     redirect(nextPath)
@@ -31,14 +31,14 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
           <div className="mb-8">
             <p className="mb-2 text-sm font-bold text-gold-light">FIFA Fan Fest</p>
             <h1 className="font-serif text-3xl font-black leading-tight text-white">
-              Admin access
+              Developer access
             </h1>
             <p className="mt-3 text-sm leading-6 text-[var(--on-dark-dim)]">
-              Enter the client dashboard password to view prediction and coupon performance.
+              Enter the developer password to manage teams, fixtures, and match results.
             </p>
           </div>
 
-          <AdminLoginForm nextPath={nextPath} />
+          <DevLoginForm nextPath={nextPath} />
         </div>
       </section>
     </main>

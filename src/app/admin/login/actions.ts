@@ -29,6 +29,13 @@ export async function adminLoginAction(
   }
 
   const cookieStore = await cookies()
+  cookieStore.set(ADMIN_AUTH_COOKIE, '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 0,
+  })
   cookieStore.set(ADMIN_AUTH_COOKIE, ADMIN_AUTH_VALUE, {
     httpOnly: true,
     sameSite: 'lax',

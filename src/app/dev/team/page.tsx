@@ -7,7 +7,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { TeamForm } from './team-form'
 
 export const metadata: Metadata = {
-  title: 'Admin Teams',
+  title: 'Dev Teams',
 }
 
 export const runtime = 'nodejs'
@@ -44,8 +44,8 @@ export default async function AdminTeamPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <AdminLink href="/admin/team" active icon={Flag} label="Teams" />
-              <AdminLink href="/admin/matches" icon={CalendarDays} label="Matches" />
+              <AdminLink href="/dev/team" active icon={Flag} label="Teams" />
+              <AdminLink href="/dev/matches" icon={CalendarDays} label="Matches" />
             </div>
           </div>
         </header>
