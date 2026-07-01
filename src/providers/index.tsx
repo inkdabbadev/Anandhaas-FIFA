@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react'
 import { ToastViewport } from '@/components/ui/toast'
-import { FreshAppReset } from '@/components/fresh-app-reset'
+import { SessionRestorer } from '@/components/session-restorer'
 
 /** Global client providers. Kept lean — Zustand needs no provider. */
 export function Providers({ children }: { children: ReactNode }) {
@@ -10,7 +10,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <>
       {children}
       <ToastViewport />
-      <FreshAppReset />
+      <SessionRestorer />
     </>
   )
 }

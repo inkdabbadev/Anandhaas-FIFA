@@ -607,7 +607,8 @@ function saveSessionUser(user: StoredUser) {
   if (typeof window === 'undefined') return
 
   try {
-    window.sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(user))
+    window.localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user))
+    window.sessionStorage.removeItem(SESSION_USER_KEY)
   } catch {}
 }
 
@@ -615,13 +616,15 @@ function readSessionUser(): StoredUser | null {
   if (typeof window === 'undefined') return null
 
   try {
-    const raw = window.sessionStorage.getItem(SESSION_USER_KEY)
+    const raw =
+      window.localStorage.getItem(SESSION_USER_KEY) ??
+      window.sessionStorage.getItem(SESSION_USER_KEY)
     if (!raw) return null
 
     const parsed = JSON.parse(raw) as Partial<StoredUser>
     if (!parsed.phone || !parsed.email || !parsed.name) return null
 
-    return {
+    const user = {
       id: typeof parsed.id === 'string' ? parsed.id : undefined,
       phone: parsed.phone,
       email: parsed.email,
@@ -632,6 +635,8 @@ function readSessionUser(): StoredUser | null {
       correctCount: Number(parsed.correctCount ?? 0),
       createdAt: typeof parsed.createdAt === 'string' ? parsed.createdAt : new Date().toISOString(),
     }
+    saveSessionUser(user)
+    return user
   } catch {
     clearSessionUser()
     return null
@@ -642,6 +647,7 @@ function clearSessionUser() {
   if (typeof window === 'undefined') return
 
   try {
+    window.localStorage.removeItem(SESSION_USER_KEY)
     window.sessionStorage.removeItem(SESSION_USER_KEY)
   } catch {}
 }
