@@ -6,6 +6,8 @@ import {
   ADMIN_AUTH_COOKIE,
   ADMIN_AUTH_VALUE,
   ADMIN_PASSWORD,
+  getAdminAuthCookieOptions,
+  getLegacyAdminAuthCookieOptions,
   getSafeAdminNextPath,
 } from '@/lib/admin-auth'
 
@@ -30,18 +32,10 @@ export async function adminLoginAction(
 
   const cookieStore = await cookies()
   cookieStore.set(ADMIN_AUTH_COOKIE, '', {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 0,
+    ...getLegacyAdminAuthCookieOptions(0),
   })
   cookieStore.set(ADMIN_AUTH_COOKIE, ADMIN_AUTH_VALUE, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/admin',
-    maxAge: 60 * 60 * 12,
+    ...getAdminAuthCookieOptions(),
   })
 
   redirect(nextPath)
